@@ -19,3 +19,5 @@ Route::get('/', function () {
 });
 
 Route::get('/oee', [OeeController::class, 'index']);
+
+Route::get('/api/oee-availability', [OeeController::class, 'calculateAvailability']);
