@@ -14,10 +14,14 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Route::get('/', function () {
+//     return view('welcome');
+// });
 
-Route::get('/oee', [OeeController::class, 'index']);
+Route::get('/', [OeeController::class, 'index']);
 
 Route::get('/api/oee-availability', [OeeController::class, 'calculateAvailability']);
+
+Route::get('/oee-performance', [OeeController::class, 'calculatePerformance']);
+
+Route::get('/oee-data', [OeeController::class, 'getData'])->name('oee.data');

@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('oee_data', function (Blueprint $table) {
             $table->id();
-            $table->integer('line');
+            $table->string('line');
             $table->string('nama_line');
             $table->date('tgl');
             $table->integer('shift');
