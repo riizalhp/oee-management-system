@@ -20,8 +20,20 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [OeeController::class, 'index']);
 
-Route::get('/api/oee-availability', [OeeController::class, 'calculateAvailability']);
+Route::post('/update-downtime', [OeeController::class, 'updateDowntime']);
 
-Route::get('/oee-performance', [OeeController::class, 'calculatePerformance']);
+Route::post('/toggle-machine-status', [OeeController::class, 'toggleMachineStatus']);
 
-Route::get('/oee-data', [OeeController::class, 'getData'])->name('oee.data');
+Route::post('/schedule-downtime', [OeeController::class, 'scheduleDowntime'])->name('schedule-downtime');
+
+Route::post('/items', [OeeController::class, 'storeItem'])->name('items.store');
+
+Route::get('/items', [OeeController::class, 'showItems'])->name('items.index');
+
+Route::post('/update-reject', [OeeController::class, 'updateReject'])->name('update.reject');
+
+// Route::get('/api/oee-availability', [OeeController::class, 'calculateAvailability']);
+
+// Route::get('/oee-performance', [OeeController::class, 'calculatePerformance']);
+
+// Route::get('/oee-data', [OeeController::class, 'getData'])->name('oee.data');

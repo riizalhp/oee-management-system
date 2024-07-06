@@ -13,14 +13,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('oee_data', function (Blueprint $table) {
+        Schema::create('oee_metrics', function (Blueprint $table) {
             $table->id();
-            $table->string('line');
-            $table->string('nama_line');
-            $table->date('tgl');
-            $table->integer('shift');
-            $table->string('item');
-            $table->integer('seq');
+            $table->float('availability');
+            $table->float('performance');
+            $table->float('quality');
+            $table->integer('reject')->default(0);
+            $table->float('oee');
             $table->timestamp('timestamp');
             $table->timestamps();
         });
@@ -33,6 +32,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('oee_data');
+        Schema::dropIfExists('oee_metrics');
     }
 };

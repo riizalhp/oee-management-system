@@ -34,22 +34,20 @@
 <body>
     <x-navbar></x-navbar>
     <div class="container my-3">
-        <div class="row text-center mb-5">
+        <div class="row text-center">
             <div class="col">
-                <h3 class="text-light mb-3">Machine Status</h3>
-                <button id="toggleMachineStatus"
-                    class="btn btn-lg {{ $status ? 'btn-success' : 'btn-danger' }} mb-3">{{ $status ? 'ON' : 'STOP' }}</button>
+                <button id="toggleMachineStatus" class="btn btn-success">{{ $status ? 'ON' : 'STOP' }}</button>
             </div>
             <div class="col">
                 <!-- Form Downtime Terjadwal -->
                 <form id="scheduleDowntimeForm" method="POST" action="/schedule-downtime">
                     @csrf
-                    <div class="form-group mb-3">
-                        <label for="start_time" class="form-label text-light">Start Time</label>
+                    <div class="form-group">
+                        <label for="start_time">Start Time</label>
                         <input type="datetime-local" id="start_time" name="start_time" class="form-control" required>
                     </div>
-                    <div class="form-group mb-3">
-                        <label for="end_time" class="form-label text-light">End Time (optional)</label>
+                    <div class="form-group">
+                        <label for="end_time">End Time (optional)</label>
                         <input type="datetime-local" id="end_time" name="end_time" class="form-control">
                     </div>
                     <button type="submit" class="btn btn-primary">Schedule Downtime</button>
@@ -59,10 +57,10 @@
                 <!-- Form untuk mengisi reject -->
                 <form method="POST" action="{{ route('update.reject') }}">
                     @csrf
-                    <div class="form-group mb-3">
-                        <label for="reject" class="form-label text-light">Jumlah Reject</label>
+                    <div class="form-group">
+                        <label for="reject">Jumlah Reject</label>
                         <input type="number" id="reject" name="reject" class="form-control"
-                            value="{{ $latestReject ?? 0 }}" required>
+                            value="{{ $latestOeeMetric->reject ?? 0 }}" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Simpan Reject</button>
                 </form>
@@ -128,6 +126,34 @@
         </div>
     </div>
     <script>
+        // function fetchOeeData() {
+        //     $.ajax({
+        //         url: "{{ route('oee.data') }}",
+        //         method: 'GET',
+        //         success: function(data) {
+        //             var tableBody = $('#oee-table tbody');
+        //             tableBody.empty();
+        //             data.forEach(function(production) {
+        //                 var row = '<tr>' +
+        //                     '<td>' + production.line + '</td>' +
+        //                     '<td>' + production.nama_line + '</td>' +
+        //                     '<td>' + production.tgl + '</td>' +
+        //                     '<td>' + production.shift + '</td>' +
+        //                     '<td>' + production.item + '</td>' +
+        //                     '<td>' + production.seq + '</td>' +
+        //                     '<td>' + production.timestamp + '</td>' +
+        //                     '</tr>';
+        //                 tableBody.append(row);
+        //             });
+        //         }
+        //     });
+        // }
+
+        // $(document).ready(function() {
+        //     fetchOeeData();
+        //     setInterval(fetchOeeData, 60000); // Update every minute
+        // });
+
         function createGaugeChart(ctx, value, label, textId) {
             const chart = new Chart(ctx, {
                 type: 'doughnut',
@@ -166,42 +192,133 @@
             var availabilityCtx = document.getElementById('availabilityChart').getContext('2d');
             var performanceCtx = document.getElementById('performanceChart').getContext('2d');
             var qualityCtx = document.getElementById('qualityChart').getContext('2d');
-            var oeeCtx = document.getElementById('oeeChart').getContext('2d');
 
             createGaugeChart(availabilityCtx, {{ $oeeMetrics->availability }}, 'Availability', 'availabilityText');
             createGaugeChart(performanceCtx, {{ $oeeMetrics->performance }}, 'Performance', 'performanceText');
             createGaugeChart(qualityCtx, {{ $oeeMetrics->quality }}, 'Quality', 'qualityText');
-            createGaugeChart(oeeCtx, {{ $oeeMetrics->oee }}, 'OEE', 'oeeText');
+            createGaugeChart(qualityCtx, {{ $oeeMetrics->oee }}, 'OEE', 'oeeText');
         };
 
-        function checkMachineStatus() {
-            $.get('/machine-status', function(response) {
-                if (response.status === "on") {
-                    $('#toggleMachineStatus').removeClass('btn-danger').addClass('btn-success').text('ON');
-                } else if (response.status === "stop") {
-                    $('#toggleMachineStatus').removeClass('btn-success').addClass('btn-danger').text('STOP');
-                }
-            });
-        }
+        // function fetchAvailability() {
+        //     fetch('/api/oee-availability')
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             document.getElementById('availabilityText').innerText = data.availability.toFixed(3) + '%';
+        //             document.getElementById('downtimeText').innerText = data.downtime;
+        //             document.getElementById('operatingTimeText').innerText = data.operatingTime;
+        //             updateChart(availabilityChart, data.availability);
+        //         })
+        //         .catch(error => console.error('Error fetching availability:', error));
+        // }
+
+        // function fetchPerformance() {
+        //     fetch('/oee-performance')
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             document.getElementById('performanceText').innerText = data.performance + '%';
+        //             // document.getElementById('performanceText').innerText = data.performance.toFixed(3) + '%';
+        //             document.getElementById('performarrayText').innerText = data.performarray;
+        //             updateChart(performanceChart, data.performance);
+        //         })
+        //         .catch(error => console.error('Error fetching performance:', error));
+        // }
+
+        // function updateChart(chart, value) {
+        //     chart.data.datasets[0].data[0] = value;
+        //     chart.data.datasets[0].data[1] = 100 - value;
+        //     chart.update();
+        // }
+
+        // const availabilityChart = new Chart(document.getElementById('availabilityChart'), {
+        //     type: 'doughnut',
+        //     data: {
+        //         datasets: [{
+        //             data: [0, 100],
+        //             backgroundColor: ['#4CAF50', '#E4080A'],
+        //             borderWidth: 0
+        //         }],
+        //         labels: ['Available', 'Unavailable']
+        //     },
+        //     options: {
+        //         rotation: -135, // Rotate starting point to the top
+        //         circumference: 270, // Display only 3/4 of the chart
+        //         cutoutPercentage: 70,
+        //         tooltips: {
+        //             enabled: false
+        //         },
+        //         spacing: 5,
+        //         hover: {
+        //             mode: null
+        //         },
+        //         plugins: {
+        //             legend: {
+        //                 display: false
+        //             }
+        //         }
+        //     }
+        // });
+
+        // const performanceChart = new Chart(document.getElementById('performanceChart'), {
+        //     type: 'doughnut',
+        //     data: {
+        //         datasets: [{
+        //             data: [0, 100],
+        //             backgroundColor: ['#4CAF50', '#E4080A'],
+        //             borderWidth: 0
+        //         }],
+        //         labels: ['Good Performance', 'Bad Performance']
+        //     },
+        //     options: {
+        //         rotation: -135, // Rotate starting point to the top
+        //         circumference: 270, // Display only 3/4 of the chart
+        //         cutoutPercentage: 70,
+        //         tooltips: {
+        //             enabled: false
+        //         },
+        //         spacing: 5,
+        //         hover: {
+        //             mode: null
+        //         },
+        //         plugins: {
+        //             legend: {
+        //                 display: false
+        //             }
+        //         }
+        //     }
+        // });
+
+        // setInterval(fetchAvailability, 60000); // Refresh every minute
+        // setInterval(fetchPerformance, 60000); // Refresh every minute
+        // fetchAvailability(); // Initial fetch
+        // fetchPerformance(); // Initial fetch
+
+        // Echo.channel('oee-data')
+        //     .listen('OeeDataUpdated', (e) => {
+        //         const tableBody = document.querySelector('#oee-table tbody');
+        //         const newRow = document.createElement('tr');
+        //         newRow.innerHTML = `
+    //             <td>${e.oeeData.line}</td>
+    //             <td>${e.oeeData.nama_line}</td>
+    //             <td>${e.oeeData.tgl}</td>
+    //             <td>${e.oeeData.shift}</td>
+    //             <td>${e.oeeData.item}</td>
+    //             <td>${e.oeeData.seq}</td>
+    //             <td>${e.oeeData.timestamp}</td>
+    //         `;
+        //         tableBody.appendChild(newRow);
+        //     });
 
         $(document).ready(function() {
-            setInterval(checkMachineStatus, 60000); // Check every minute
-
-            var machineStatus = '{{ $status }}' === 'on';
-
             $('#toggleMachineStatus').click(function() {
                 $.post('/toggle-machine-status', {
-                    _token: '{{ csrf_token() }}',
-                    status: machineStatus ? 'on' : 'stop'
+                    _token: '{{ csrf_token() }}'
                 }, function(response) {
-                    if (response.status === "on") {
+                    if (response.status) {
                         $('#toggleMachineStatus').removeClass('btn-danger').addClass('btn-success')
                             .text('ON');
-                        machineStatus = true;
                     } else {
                         $('#toggleMachineStatus').removeClass('btn-success').addClass('btn-danger')
                             .text('STOP');
-                        machineStatus = false;
                     }
                 });
             });
