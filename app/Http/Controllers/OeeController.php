@@ -8,6 +8,7 @@ use App\Models\Production;
 use App\Models\OeeMetric;
 use App\Models\Downtime;
 use App\Models\Item;
+use App\Models\MachineStartTime;
 use App\Models\MachineStatus;
 use App\Models\ScheduledDowntime;
 use Carbon\Carbon;
@@ -364,5 +365,18 @@ class OeeController extends Controller
     public function calculateOee() {
         $oeeMetrics = $this->calculateOeeMetrics();
         return response()->json(['success' => true, 'oeeMetrics' => $oeeMetrics]);
+    }
+
+    public function machineStartStore(Request $request)
+    {
+        $request->validate([
+            'machine_start' => 'required|date_format:Y-m-d\TH:i',
+        ]);
+
+        MachineStartTime::create([
+            'machine_start' => $request->machine_start,
+        ]);
+
+        return redirect()->back()->with('success', 'Machine start time berhasil disimpan');
     }
 }

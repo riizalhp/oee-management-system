@@ -34,6 +34,8 @@ Route::post('/update-reject', [OeeController::class, 'updateReject'])->name('upd
 
 Route::get('/calculate-oee', [OeeController::class, 'calculateOee']);
 
+Route::post('/machine-start', [OeeController::class, 'machineStartStore'])->name('machine-start.store');
+
 // Route::get('/api/oee-availability', [OeeController::class, 'calculateAvailability']);
 
 // Route::get('/oee-performance', [OeeController::class, 'calculatePerformance']);

@@ -28,6 +28,12 @@
             font-weight: bold;
             color: white;
         }
+
+        /* .center-vertical {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        } */
     </style>
 </head>
 
@@ -35,37 +41,61 @@
     <x-navbar></x-navbar>
     <div class="container my-3">
         <div class="row text-center mb-5">
-            <div class="col">
-                <h3 class="text-light mb-3">Machine Status</h3>
-                <button id="toggleMachineStatus"
-                    class="btn btn-lg {{ $status ? 'btn-success' : 'btn-danger' }} mb-3">{{ $status ? 'ON' : 'STOP' }}</button>
+            <div class="col center-vertical">
+                <div class="container">
+                    <h4 class="text-light mb-3">Machine Status</h4>
+                    <button id="toggleMachineStatus"
+                        class="btn btn-lg {{ $status ? 'btn-success' : 'btn-danger' }} mb-3">{{ $status ? 'ON' : 'STOP' }}</button>
+                </div>
             </div>
-            <div class="col">
-                <!-- Form Downtime Terjadwal -->
-                <form id="scheduleDowntimeForm" method="POST" action="/schedule-downtime">
-                    @csrf
-                    <div class="form-group mb-3">
-                        <label for="start_time" class="form-label text-light">Start Time</label>
-                        <input type="datetime-local" id="start_time" name="start_time" class="form-control" required>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="end_time" class="form-label text-light">End Time (optional)</label>
-                        <input type="datetime-local" id="end_time" name="end_time" class="form-control">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Schedule Downtime</button>
-                </form>
+            <div class="col center-vertical">
+                <div class="container">
+                    <!-- Form Machine Start -->
+                    <h4 class="text-light mb-3">Set Machine Start</h4>
+                    <form id="machineStartForm" method="POST" action="{{ route('machine-start.store') }}">
+                        @csrf
+                        <div class="form-group mb-3">
+                            <label for="machine_start" class="form-label text-light">Start Time</label>
+                            <input type="datetime-local" id="machine_start" name="machine_start" class="form-control"
+                                required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
             </div>
-            <div class="col">
-                <!-- Form untuk mengisi reject -->
-                <form method="POST" action="{{ route('update.reject') }}">
-                    @csrf
-                    <div class="form-group mb-3">
-                        <label for="reject" class="form-label text-light">Jumlah Reject</label>
-                        <input type="number" id="reject" name="reject" class="form-control"
-                            value="{{ $latestReject ?? 0 }}" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Simpan Reject</button>
-                </form>
+            <div class="col center-vertical">
+                <div class="container">
+                    <h4 class="text-light mb-3">Set Downtime Schedule</h4>
+                    <!-- Form Downtime Terjadwal -->
+                    <form id="scheduleDowntimeForm" method="POST" action="/schedule-downtime">
+                        @csrf
+                        <div class="form-group mb-3">
+                            <label for="start_time" class="form-label text-light">Start Time</label>
+                            <input type="datetime-local" id="start_time" name="start_time" class="form-control"
+                                required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="end_time" class="form-label text-light">End Time (optional)</label>
+                            <input type="datetime-local" id="end_time" name="end_time" class="form-control">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col center-vertical">
+                <div class="container">
+                    <h4 class="text-light mb-3">Input Reject Item</h4>
+                    <!-- Form untuk mengisi reject -->
+                    <form method="POST" action="{{ route('update.reject') }}">
+                        @csrf
+                        <div class="form-group mb-3">
+                            <label for="reject" class="form-label text-light">Jumlah Reject</label>
+                            <input type="number" id="reject" name="reject" class="form-control"
+                                value="{{ $latestReject ?? 0 }}" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
             </div>
         </div>
         <div class="row text-center">
