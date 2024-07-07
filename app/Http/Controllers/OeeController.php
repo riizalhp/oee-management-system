@@ -207,7 +207,8 @@ class OeeController extends Controller
 
         // Calculate Quality
         $outputMesin = $totalProducedItems; // Example value
-        $rejects = 10; // Example value, this should be dynamically calculated
+        $latestOeeMetric =  OeeMetric::latest()->first();
+        $rejects = $latestOeeMetric ? $latestOeeMetric->reject : 0;
 
         // Check if $outputMesin is greater than zero to avoid DivisionByZeroError
         if ($outputMesin > 0) {
@@ -227,6 +228,7 @@ class OeeController extends Controller
         $oeeMetric->availability = $availability;
         $oeeMetric->performance = $performance;
         $oeeMetric->quality = $quality;
+        $oeeMetric->reject = $rejects;
         $oeeMetric->oee = $oee;
         $oeeMetric->timestamp = Carbon::now();
         $oeeMetric->save();
@@ -357,5 +359,10 @@ class OeeController extends Controller
         $latestOeeMetric->save();
 
         return redirect()->back()->with('success', 'Jumlah reject berhasil disimpan');
+    }
+
+    public function calculateOee() {
+        $oeeMetrics = $this->calculateOeeMetrics();
+        return response()->json(['success' => true, 'oeeMetrics' => $oeeMetrics]);
     }
 }

@@ -32,6 +32,8 @@ Route::get('/items', [OeeController::class, 'showItems'])->name('items.index');
 
 Route::post('/update-reject', [OeeController::class, 'updateReject'])->name('update.reject');
 
+Route::get('/calculate-oee', [OeeController::class, 'calculateOee']);
+
 // Route::get('/api/oee-availability', [OeeController::class, 'calculateAvailability']);
 
 // Route::get('/oee-performance', [OeeController::class, 'calculatePerformance']);

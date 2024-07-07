@@ -184,7 +184,31 @@
             });
         }
 
+        function updateChart(oeeMetrics) {
+            createGaugeChart(availabilityCtx, oeeMetrics.availability, 'Availability', 'availabilityText');
+            createGaugeChart(performanceCtx, oeeMetrics.performance, 'Performance', 'performanceText');
+            createGaugeChart(qualityCtx, oeeMetrics.quality, 'Quality', 'qualityText');
+            createGaugeChart(oeeCtx, oeeMetrics.oee, 'OEE', 'oeeText');
+        }
+
+        function fetchOeeMetrics() {
+            $.ajax({
+                url: '/calculate-oee',
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        updateChart(response.oeeMetrics);
+                    }
+                },
+                error: function(error) {
+                    console.error('Error fetching OEE metrics:', error);
+                }
+            });
+        }
+
         $(document).ready(function() {
+            fetchOeeMetrics();
+            setInterval(fetchOeeMetrics, 60000); // Check every minute
             setInterval(checkMachineStatus, 60000); // Check every minute
 
             var machineStatus = '{{ $status }}' === 'on';

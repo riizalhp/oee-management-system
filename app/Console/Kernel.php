@@ -28,6 +28,7 @@ class Kernel extends ConsoleKernel
                     // Akhiri downtime terjadwal
                     $machineStatus = MachineStatus::latest()->first();
                     if ($machineStatus && !$machineStatus->status) {
+                        $machineStatus = new MachineStatus();
                         $machineStatus->status = true;
                         $machineStatus->start_time = now();
                         $machineStatus->save();
