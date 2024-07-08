@@ -14,8 +14,15 @@
 
         .chart-container {
             position: relative;
-            height: 200px;
-            width: 200px;
+            height: 150px;
+            width: 150px;
+            display: inline-block;
+        }
+
+        .chart-container-oee {
+            position: relative;
+            height: 250px;
+            width: 250px;
             display: inline-block;
         }
 
@@ -29,26 +36,87 @@
             color: white;
         }
 
-        /* .center-vertical {
+        .center-vertical {
             display: flex;
             flex-direction: column;
             justify-content: center;
-        } */
+        }
+
+        #machine-status {
+            display: flex;
+            flex-direction: column;
+        }
     </style>
 </head>
 
 <body>
     <x-navbar></x-navbar>
-    <div class="container my-3">
-        <div class="row text-center mb-5">
-            <div class="col center-vertical">
-                <div class="container">
-                    <h4 class="text-light mb-3">Machine Status</h4>
-                    <button id="toggleMachineStatus"
-                        class="btn btn-lg {{ $status ? 'btn-success' : 'btn-danger' }} mb-3">{{ $status ? 'ON' : 'STOP' }}</button>
+    <div class="container mb-3">
+        <div class="row text-center mb-3">
+            <div class="col border py-3 me-3">
+                <h4 class="text-light mb-3">Machine Start Time</h4>
+                <span></span>
+            </div>
+            <div class="col border py-3 me-3">
+                <h4 class="text-light mb-3">Downtime Schedule</h4>
+                <span></span>
+            </div>
+            <div class="col border py-3">
+                <h4 class="text-light mb-3">Reject Item Count</h4>
+                <span></span>
+            </div>
+        </div>
+        <div class="row text-center mb-3">
+            <div class="col-8">
+                <div class="row mb-3">
+                    <div class="col border pt-3" id="machine-status">
+                        <h4 class="text-light mb-3">Machine Status</h4>
+                        <button id="toggleMachineStatus"
+                            class="btn btn-lg {{ $status ? 'btn-success' : 'btn-danger' }} mb-3">{{ $status ? 'ON' : 'STOP' }}</button>
+                    </div>
+                    <div class="col border ms-3 py-3">
+                        <h4 class="text-light mb-3">Trouble Information</h4>
+                        <span></span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col border pt-3 me-3">
+                        <h4 class="text-light">Availability</h4>
+                        <div class="chart-container my-2">
+                            <canvas id="availabilityChart"></canvas>
+                            <div class="chart-text my-2" id="availabilityText"></div>
+                        </div>
+                    </div>
+                    <div class="col border pt-3 me-3">
+                        <h4 class="text-light">Performance</h4>
+                        <div class="chart-container my-2">
+                            <canvas id="performanceChart"></canvas>
+                            <div class="chart-text my-2" id="performanceText"></div>
+                        </div>
+                    </div>
+                    <div class="col border pt-3">
+                        <h4 class="text-light">Quality</h4>
+                        <div class="chart-container my-2">
+                            <canvas id="qualityChart"></canvas>
+                            <div class="chart-text my-2" id="qualityText"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="col center-vertical">
+            <div class="col-4 center-vertical">
+                <div class="col border ms-1 center-vertical">
+                    <div class="container">
+                        <h4 class="text-light">OEE</h4>
+                        <div class="chart-container-oee my-2">
+                            <canvas id="oeeChart"></canvas>
+                            <div class="chart-text my-2" id="oeeText"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row text-center">
+            <div class="col center-vertical border me-3">
                 <div class="container">
                     <!-- Form Machine Start -->
                     <h4 class="text-light mb-3">Set Machine Start</h4>
@@ -63,8 +131,8 @@
                     </form>
                 </div>
             </div>
-            <div class="col center-vertical">
-                <div class="container">
+            <div class="col center-vertical border me-3">
+                <div class="container py-3">
                     <h4 class="text-light mb-3">Set Downtime Schedule</h4>
                     <!-- Form Downtime Terjadwal -->
                     <form id="scheduleDowntimeForm" method="POST" action="/schedule-downtime">
@@ -82,7 +150,7 @@
                     </form>
                 </div>
             </div>
-            <div class="col center-vertical">
+            <div class="col center-vertical border">
                 <div class="container">
                     <h4 class="text-light mb-3">Input Reject Item</h4>
                     <!-- Form untuk mengisi reject -->
@@ -98,30 +166,7 @@
                 </div>
             </div>
         </div>
-        <div class="row text-center">
-            <div class="col-md-4">
-                <h4 class="text-light">Availability</h4>
-                <div class="chart-container my-2">
-                    <canvas id="availabilityChart"></canvas>
-                    <div class="chart-text my-2" id="availabilityText"></div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <h4 class="text-light">Performance</h4>
-                <div class="chart-container my-2">
-                    <canvas id="performanceChart"></canvas>
-                    <div class="chart-text my-2" id="performanceText"></div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <h4 class="text-light">Quality</h4>
-                <div class="chart-container my-2">
-                    <canvas id="qualityChart"></canvas>
-                    <div class="chart-text my-2" id="qualityText"></div>
-                </div>
-            </div>
-        </div>
-        <div class="row text-center">
+        {{-- <div class="row text-center">
             <div class="col-8">
                 <table class="table table-dark m-3" id="oee-table">
                     <thead>
@@ -148,14 +193,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="col-4">
-                <h4 class="text-light">OEE</h4>
-                <div class="chart-container my-2">
-                    <canvas id="oeeChart"></canvas>
-                    <div class="chart-text my-2" id="oeeText"></div>
-                </div>
-            </div>
-        </div>
+        </div> --}}
     </div>
     <script>
         function createGaugeChart(ctx, value, label, textId) {
@@ -262,6 +300,12 @@
         });
     </script>
     <script src="{{ asset('js/bootstrap.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
+        integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous">
+    </script>
 </body>
 
 </html>
