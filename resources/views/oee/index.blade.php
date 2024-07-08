@@ -54,16 +54,12 @@
     <div class="container mb-3">
         <div class="row text-center mb-3">
             <div class="col border py-3 me-3">
-                <h4 class="text-light mb-3">Machine Start Time</h4>
-                <span></span>
-            </div>
-            <div class="col border py-3 me-3">
-                <h4 class="text-light mb-3">Downtime Schedule</h4>
-                <span></span>
+                <h4 class="text-light mb-3">Shift Start Time</h4>
+                <span id="countdown" class="text-light"></span>
             </div>
             <div class="col border py-3">
-                <h4 class="text-light mb-3">Reject Item Count</h4>
-                <span></span>
+                <h4 class="text-light mb-3">Downtime Schedule</h4>
+                <span id="downtimeCountdown" class="text-light"></span>
             </div>
         </div>
         <div class="row text-center mb-3">
@@ -116,16 +112,25 @@
             </div>
         </div>
         <div class="row text-center">
-            <div class="col center-vertical border me-3">
+            <div class="col center-vertical border py-3 me-3">
                 <div class="container">
                     <!-- Form Machine Start -->
-                    <h4 class="text-light mb-3">Set Machine Start</h4>
+                    <h4 class="text-light mb-3">Set Shift Time</h4>
                     <form id="machineStartForm" method="POST" action="{{ route('machine-start.store') }}">
                         @csrf
                         <div class="form-group mb-3">
                             <label for="machine_start" class="form-label text-light">Start Time</label>
                             <input type="datetime-local" id="machine_start" name="machine_start" class="form-control"
                                 required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="machine_end" class="form-label text-light">End Time</label>
+                            <input type="datetime-local" id="machine_end" name="machine_end" class="form-control"
+                                required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="planned_time" class="form-label text-light">Planned Time</label>
+                            <input type="number" id="planned_time" name="planned_time" class="form-control" required>
                         </div>
                         <button type="submit" class="btn btn-primary">Submit</button>
                     </form>
@@ -230,16 +235,17 @@
             return chart;
         };
 
-        window.onload = function() {
-            var availabilityCtx = document.getElementById('availabilityChart').getContext('2d');
-            var performanceCtx = document.getElementById('performanceChart').getContext('2d');
-            var qualityCtx = document.getElementById('qualityChart').getContext('2d');
-            var oeeCtx = document.getElementById('oeeChart').getContext('2d');
+        var availabilityCtx = document.getElementById('availabilityChart').getContext('2d');
+        var performanceCtx = document.getElementById('performanceChart').getContext('2d');
+        var qualityCtx = document.getElementById('qualityChart').getContext('2d');
+        var oeeCtx = document.getElementById('oeeChart').getContext('2d');
 
-            createGaugeChart(availabilityCtx, {{ $oeeMetrics->availability }}, 'Availability', 'availabilityText');
-            createGaugeChart(performanceCtx, {{ $oeeMetrics->performance }}, 'Performance', 'performanceText');
-            createGaugeChart(qualityCtx, {{ $oeeMetrics->quality }}, 'Quality', 'qualityText');
-            createGaugeChart(oeeCtx, {{ $oeeMetrics->oee }}, 'OEE', 'oeeText');
+        window.onload = function() {
+            createGaugeChart(availabilityCtx, {{ $latestOeeMetrics->availability }}, 'Availability',
+                'availabilityText');
+            createGaugeChart(performanceCtx, {{ $latestOeeMetrics->performance }}, 'Performance', 'performanceText');
+            createGaugeChart(qualityCtx, {{ $latestOeeMetrics->quality }}, 'Quality', 'qualityText');
+            createGaugeChart(oeeCtx, {{ $latestOeeMetrics->oee }}, 'OEE', 'oeeText');
         };
 
         function checkMachineStatus() {
@@ -273,6 +279,78 @@
                 }
             });
         }
+
+        @if ($nearestMachineStartTime)
+            var machineStartTime = new Date('{{ $nearestMachineStartTime->machine_start }}');
+            var machineEndTime = new Date('{{ $nearestMachineStartTime->machine_end }}');
+            var countdownElement = document.getElementById('countdown');
+
+            function updateCountdown() {
+                var now = new Date();
+                var timeRemainingStart = machineStartTime - now;
+                var timeRemainingEnd = machineEndTime - now;
+
+                if (timeRemainingStart > 0) {
+                    var days = Math.floor(timeRemainingStart / (1000 * 60 * 60 * 24));
+                    var hours = Math.floor((timeRemainingStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var minutes = Math.floor((timeRemainingStart % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((timeRemainingStart % (1000 * 60)) / 1000);
+
+                    countdownElement.innerHTML = "Shift will starts in " + days + "d " + hours + "h " +
+                        minutes + "m " + seconds + "s ";
+                } else if (timeRemainingEnd > 0) {
+                    var days = Math.floor(timeRemainingEnd / (1000 * 60 * 60 * 24));
+                    var hours = Math.floor((timeRemainingEnd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var minutes = Math.floor((timeRemainingEnd % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((timeRemainingEnd % (1000 * 60)) / 1000);
+
+                    countdownElement.innerHTML = "Shift will ends in " + days + "d " + hours + "h " +
+                        minutes + "m " + seconds + "s ";
+                } else {
+                    countdownElement.innerHTML = "Shift ended";
+                }
+            }
+
+            setInterval(updateCountdown, 1000);
+        @else
+            document.getElementById('countdown').innerHTML = "No upcoming shift time";
+        @endif
+
+        @if ($nearestDowntimeSchedule)
+            var downtimeStartTime = new Date('{{ $nearestDowntimeSchedule->start_time }}');
+            var downtimeEndTime = new Date('{{ $nearestDowntimeSchedule->end_time }}');
+            var downtimeCountdownElement = document.getElementById('downtimeCountdown');
+
+            function updateDowntimeCountdown() {
+                var d_now = new Date();
+                var d_timeRemainingStart = downtimeStartTime - d_now;
+                var d_timeRemainingEnd = downtimeEndTime - d_now;
+
+                if (d_timeRemainingStart > 0) {
+                    var d_days = Math.floor(d_timeRemainingStart / (1000 * 60 * 60 * 24));
+                    var d_hours = Math.floor((d_timeRemainingStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var d_minutes = Math.floor((d_timeRemainingStart % (1000 * 60 * 60)) / (1000 * 60));
+                    var d_seconds = Math.floor((d_timeRemainingStart % (1000 * 60)) / 1000);
+
+                    downtimeCountdownElement.innerHTML = "Downtime will starts in " + d_days + "d " + d_hours + "h " +
+                        d_minutes + "m " + d_seconds + "s ";
+                } else if (d_timeRemainingEnd > 0) {
+                    var d_days = Math.floor(d_timeRemainingEnd / (1000 * 60 * 60 * 24));
+                    var d_hours = Math.floor((d_timeRemainingEnd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var d_minutes = Math.floor((d_timeRemainingEnd % (1000 * 60 * 60)) / (1000 * 60));
+                    var d_seconds = Math.floor((d_timeRemainingEnd % (1000 * 60)) / 1000);
+
+                    downtimeCountdownElement.innerHTML = "Downtime will ends in " + d_days + "d " + d_hours + "h " +
+                        d_minutes + "m " + d_seconds + "s ";
+                } else {
+                    downtimeCountdownElement.innerHTML = "Downtime ended";
+                }
+            }
+
+            setInterval(updateDowntimeCountdown, 1000);
+        @else
+            document.getElementById('downtimeCountdown').innerHTML = "No upcoming downtime schedule";
+        @endif
 
         $(document).ready(function() {
             fetchOeeMetrics();

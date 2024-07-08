@@ -23,169 +23,32 @@ class OeeController extends Controller
 
         $productions = Production::all();
 
-        // Calculate OEE metrics
-        $oeeMetrics = $this->calculateOeeMetrics();
-
         // Retrieve machine status
         $machineStatus = MachineStatus::latest()->first();
         $status = $machineStatus ? $machineStatus->status : null;
 
         // Ambil atau buat OEE metric terbaru
-        $latestOeeMetric = OeeMetric::latest()->first();
-        if (!$latestOeeMetric) {
-            $latestOeeMetric = new OeeMetric();
+        $latestOeeMetrics = OeeMetric::latest()->first();
+        if (!$latestOeeMetrics) {
+            $latestOeeMetrics = new OeeMetric();
+            $latestOeeMetrics->availability = 0;
+            $latestOeeMetrics->performance = 0;
+            $latestOeeMetrics->quality = 0;
+            $latestOeeMetrics->reject = 0;
         }
-        $latestReject = $latestOeeMetric->reject;
+        $latestReject = $latestOeeMetrics->reject;
 
-        return view('oee.index', compact('productions', 'oeeMetrics', 'status', 'latestReject'));
+        $now = Carbon::now();
+        $nearestMachineStartTime = MachineStartTime::where('machine_start', '>=', $now)
+            ->orderBy('machine_start', 'asc')
+            ->first();
+
+        $nearestDowntimeSchedule = ScheduledDowntime::where('start_time', '>=', $now)
+            ->orderBy('start_time', 'asc')
+            ->first();
+
+        return view('oee.index', compact('productions', 'latestOeeMetrics', 'status', 'latestReject', 'nearestMachineStartTime', 'nearestDowntimeSchedule'));
     }
-
-    // public function getData() {
-    //     $data = OeeData::all();
-    //     return response()->json($data);
-    // }
-
-    // public function calculateAvailability()
-    // {
-    //     // Ambil semua data dari tabel oee_dashboard
-    //     $data = OeeData::orderBy('timestamp')->get();
-
-    //     $downtime = 0;
-    //     $lastTimestamp = null;
-    //     $startOfDay = Carbon::now('Asia/Jakarta')->startOfDay();
-    //     $currentTime = Carbon::now('Asia/Jakarta');
-    //     $totalMinutesElapsed = $startOfDay->diffInMinutes($currentTime);
-
-    //     foreach ($data as $datum) {
-    //         $currentTimestamp = Carbon::parse($datum->timestamp);
-
-    //         if ($lastTimestamp) {
-    //             $interval = $lastTimestamp->diffInMinutes($currentTimestamp);
-
-    //             if ($interval > 3) {
-    //                 $downtime += $interval;
-    //             }
-    //         } else {
-    //             // Di awal ketika mesin menyala sampai produksi pertama dihitung sebagai downtime
-    //             $downtime += $currentTimestamp->diffInMinutes($startOfDay);
-    //         }
-
-    //         $lastTimestamp = $currentTimestamp;
-    //     }
-
-    //     // Tambahkan downtime jika lebih dari 3 menit belum ada produksi
-    //     if ($lastTimestamp) {
-    //         $interval = $lastTimestamp->diffInMinutes($currentTime);
-
-    //         if ($interval > 3) {
-    //             $downtime += $interval;
-    //         }
-    //     }
-
-    //     $operatingTime = $totalMinutesElapsed - $downtime;
-    //     $availability = ($operatingTime / 1440) * 100;
-
-    //     return response()->json([
-    //         'availability' => $availability,
-    //         'downtime' => $downtime,
-    //         'operatingTime' => $operatingTime
-    //     ]);
-    // }
-
-    // public function calculatePerformance() {
-    //     // Definisikan Standar Item Per Menit (SM)
-    //     $standardItemsPerMinute = [
-    //         "BACKING PLATE D74A RH/LH 1/4" => 10,
-    //         "BACKING PLATE D74A RH/LH 2/4" => 0.067,
-    //         "BOTTOM PLATE VOLVO 1/2" => 5.88,
-    //         "BRACKER HELPER SPRING BY 4/4" => 5,
-    //         "C/M CAB VOLVO (6624) 1/2" => 7.69,
-    //         "CROSS MEMBER NO.4 LOWER 2/2 0W050" => 5,
-    //         "PARKING BRAKE 650A LH 1/4" => 10,
-    //         "PARKING BRAKE 650A LH 3/4" => 12.5,
-    //         "PARKING BRAKE 650A RH 1/4" => 10,
-    //         "PLATE D - VOLVO 1/2" => 10,
-    //         "PLATE D - VOLVO 2/2" => 7.69,
-    //     ];
-
-    //     // Ambil semua data dari tabel oee_dashboard
-    //     $data = OeeData::orderBy('timestamp')->get();
-
-    //     $performanceData = [];
-    //     $startOfDay = Carbon::now('Asia/Jakarta')->startOfDay();
-    //     $currentTime = Carbon::now('Asia/Jakarta');
-    //     $totalMinutesElapsed = $startOfDay->diffInMinutes($currentTime);
-    //     $currentMinute = $startOfDay->copy();
-    //     $minuteData = [];
-
-    //     // Iterasi setiap menit dari awal hari sampai sekarang
-    //     for ($i = 0; $i <= $totalMinutesElapsed; $i++) {
-    //         $minuteData[$currentMinute->format('Y-m-d H:i')] = [];
-    //         $currentMinute->addMinute();
-    //     }
-
-    //     // Kelompokkan data produksi berdasarkan menit
-    //     foreach ($data as $datum) {
-    //         $timestamp = Carbon::parse($datum->timestamp, 'Asia/Jakarta');
-    //         $minute = $timestamp->format('Y-m-d H:i');
-    //         $minuteData[$minute][] = $datum;
-    //     }
-
-    //     // Hitung performa untuk setiap menit
-    //     foreach ($minuteData as $minute => $dataInMinute) {
-    //         if (empty($dataInMinute)) {
-    //             $performanceData[] = [
-    //                 'minute' => $minute,
-    //                 'performance' => 0
-    //             ];
-    //         } else {
-    //             $performanceData[] = [
-    //                 'minute' => $minute,
-    //                 'performance' => $this->calculateMinutePerformance($dataInMinute, $standardItemsPerMinute)
-    //             ];
-    //         }
-    //     }
-
-    //     return response()->json([
-    //         'performance' => end($performanceData)['performance'],
-    //         'performarray' => array_column($performanceData, 'performance')
-    //     ]);
-    // }
-
-    // private function calculateMinutePerformance($minuteData, $standardItemsPerMinute)
-    // {
-    //     $totalPerformance = 0;
-    //     $totalItemsProduced = count($minuteData);
-    //     $itemCounts = [];
-
-    //     foreach ($minuteData as $datum) {
-    //         $item = $datum->item;
-    //         if (!isset($itemCounts[$item])) {
-    //             $itemCounts[$item] = 0;
-    //         }
-    //         $itemCounts[$item]++;
-    //     }
-
-    //     foreach ($itemCounts as $item => $count) {
-    //         if (isset($standardItemsPerMinute[$item])) {
-    //             $sm = $standardItemsPerMinute[$item];
-    //             $relativePerformance = ($count / $sm) * 100;
-    //             $totalPerformance += $relativePerformance * ($count / $totalItemsProduced);
-    //         }
-    //     }
-
-    //     return $totalPerformance;
-    // }
-
-    // public function store(Request $request) {
-    //     // Simpan data OEE ke database
-    // $oeeData = OeeData::create($request->all());
-
-    // // Trigger event
-    // event(new OeeData($oeeData));
-
-    // return response()->json(['success' => true]);
-    // }
 
     private function calculateOeeMetrics()
     {
@@ -371,12 +234,16 @@ class OeeController extends Controller
     {
         $request->validate([
             'machine_start' => 'required|date_format:Y-m-d\TH:i',
+            'machine_end' => 'required|date_format:Y-m-d\TH:i|after:machine_start',
+            'planned_time' => 'required|integer|min:0'
         ]);
 
         MachineStartTime::create([
             'machine_start' => $request->machine_start,
+            'machine_end' => $request->machine_end,
+            'planned_time' => $request->planned_time
         ]);
 
-        return redirect()->back()->with('success', 'Machine start time berhasil disimpan');
+        return redirect()->back()->with('success', 'Shift time berhasil disimpan');
     }
 }

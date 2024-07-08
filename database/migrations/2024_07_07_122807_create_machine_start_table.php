@@ -13,9 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('machine_start', function (Blueprint $table) {
+        Schema::create('machine_start_times', function (Blueprint $table) {
             $table->id();
             $table->dateTime('machine_start');
+            $table->dateTime('machine_end');
+            $table->integer('planned_time');
             $table->timestamps();
         });
     }

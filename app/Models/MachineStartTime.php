@@ -9,5 +9,5 @@ class MachineStartTime extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['machine_start'];
+    protected $fillable = ['machine_start', 'machine_end', 'planned_time'];
 }
