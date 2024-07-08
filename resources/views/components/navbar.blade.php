@@ -1,4 +1,4 @@
-<nav class="navbar navbar-dark navbar-expand-lg bg-body-dark p-3">
+<nav class="navbar border-bottom mb-3 navbar-dark navbar-expand-lg bg-body-dark p-3">
     <div class="container-fluid">
         <a class="navbar-brand" href="/">
             <h1>OEE Monitoring System</h1>
