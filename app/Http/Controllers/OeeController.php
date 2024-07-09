@@ -31,9 +31,10 @@ class OeeController extends Controller
         $latestOeeMetrics = OeeMetric::latest()->first();
         if (!$latestOeeMetrics) {
             $latestOeeMetrics = new OeeMetric();
-            $latestOeeMetrics->availability = 0;
-            $latestOeeMetrics->performance = 0;
-            $latestOeeMetrics->quality = 0;
+            $latestOeeMetrics->availability = 100;
+            $latestOeeMetrics->performance = 100;
+            $latestOeeMetrics->quality = 100;
+            $latestOeeMetrics->oee = 100;
             $latestOeeMetrics->reject = 0;
         }
         $latestReject = $latestOeeMetrics->reject;
@@ -43,28 +44,41 @@ class OeeController extends Controller
             ->orderBy('machine_start', 'asc')
             ->first();
 
+        $nearestMachineEndTime = MachineStartTime::where('machine_end', '>=', $now)
+            ->orderBy('machine_start', 'asc')
+            ->first();
+
         $nearestDowntimeSchedule = ScheduledDowntime::where('start_time', '>=', $now)
             ->orderBy('start_time', 'asc')
             ->first();
 
-        return view('oee.index', compact('productions', 'latestOeeMetrics', 'status', 'latestReject', 'nearestMachineStartTime', 'nearestDowntimeSchedule'));
+        return view('oee.index', compact('productions', 'latestOeeMetrics', 'status', 'latestReject', 'nearestMachineStartTime', 'nearestMachineEndTime', 'nearestDowntimeSchedule'));
     }
 
     private function calculateOeeMetrics()
     {
-        $plannedTime = 575; // Planned time in minutes
-        $downtimes = Downtime::all();
+        $now = Carbon::now();
+        $machineActive = MachineStartTime::where('machine_start', '<=', $now)
+            ->where('machine_end', '>=', $now)
+            ->orderBy('machine_start', 'asc')
+            ->first();
+
+        $plannedTime = $machineActive->planned_time; // Planned time in minutes
+        $machineStart = Carbon::parse($machineActive->machine_start);
+        $machineEnd = Carbon::parse($machineActive->machine_end);
+        $downtimes = Downtime::where('mulai', '>=', $machineStart);
         $totalDowntime = $downtimes->sum('duration');
 
         // Calculate operatingTime
-        $runtime = 575; // Example runtime, this should be dynamically calculated
+        $runtime = $now->diffInMinutes($machineStart); // Example runtime, this should be dynamically calculated
         $operatingTime = $runtime - $totalDowntime;
 
         // Calculate Availability
         $availability = ($operatingTime / $plannedTime) * 100;
 
         // Calculate Performance
-        $productions = Production::all();
+        $productions = Production::where('timestamp_capture', '>=', $machineStart)
+            ->where('timestamp_capture', '<=', $machineEnd);
         $totalProducedItems = $productions->count();
         $idealProduceTime = Item::whereIn('nama_item', $productions->pluck('nama_line'))->sum('idealProduceTime');
         $performance = ($idealProduceTime * $totalProducedItems) / $operatingTime * 100;

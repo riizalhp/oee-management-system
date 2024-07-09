@@ -231,7 +231,7 @@
                 }
             });
 
-            document.getElementById(textId).innerText = value + '%';
+            document.getElementById(textId).innerText = value.toFixed(2) + '%';
             return chart;
         };
 
@@ -240,13 +240,15 @@
         var qualityCtx = document.getElementById('qualityChart').getContext('2d');
         var oeeCtx = document.getElementById('oeeChart').getContext('2d');
 
-        window.onload = function() {
-            createGaugeChart(availabilityCtx, {{ $latestOeeMetrics->availability }}, 'Availability',
-                'availabilityText');
-            createGaugeChart(performanceCtx, {{ $latestOeeMetrics->performance }}, 'Performance', 'performanceText');
-            createGaugeChart(qualityCtx, {{ $latestOeeMetrics->quality }}, 'Quality', 'qualityText');
-            createGaugeChart(oeeCtx, {{ $latestOeeMetrics->oee }}, 'OEE', 'oeeText');
-        };
+        var availabilityChart = createGaugeChart(availabilityCtx, {{ $latestOeeMetrics->availability }}, 'Availability',
+            'availabilityText');
+        var performanceChart = createGaugeChart(performanceCtx, {{ $latestOeeMetrics->performance }}, 'Performance',
+            'performanceText');
+        var qualityChart = createGaugeChart(qualityCtx, {{ $latestOeeMetrics->quality }}, 'Quality', 'qualityText');
+        var oeeChart = createGaugeChart(oeeCtx, {{ $latestOeeMetrics->oee }}, 'OEE', 'oeeText');
+
+
+        // window.onload = function() {};
 
         function checkMachineStatus() {
             $.get('/machine-status', function(response) {
@@ -259,62 +261,26 @@
         }
 
         function updateChart(oeeMetrics) {
-            createGaugeChart(availabilityCtx, oeeMetrics.availability, 'Availability', 'availabilityText');
-            createGaugeChart(performanceCtx, oeeMetrics.performance, 'Performance', 'performanceText');
-            createGaugeChart(qualityCtx, oeeMetrics.quality, 'Quality', 'qualityText');
-            createGaugeChart(oeeCtx, oeeMetrics.oee, 'OEE', 'oeeText');
+            availabilityChart.data.datasets[0].data[0] = oeeMetrics.availability;
+            availabilityChart.data.datasets[0].data[1] = 100 - oeeMetrics.availability;
+            document.getElementById('availabilityText').innerText = oeeMetrics.availability.toFixed(2) + '%';
+            availabilityChart.update();
+
+            performanceChart.data.datasets[0].data[0] = oeeMetrics.performance;
+            performanceChart.data.datasets[0].data[1] = 100 - oeeMetrics.performance;
+            document.getElementById('performanceText').innerText = oeeMetrics.performance.toFixed(2) + '%';
+            performanceChart.update();
+
+            qualityChart.data.datasets[0].data[0] = oeeMetrics.quality;
+            qualityChart.data.datasets[0].data[1] = 100 - oeeMetrics.quality;
+            document.getElementById('qualityText').innerText = oeeMetrics.quality.toFixed(2) + '%';
+            qualityChart.update();
+
+            oeeChart.data.datasets[0].data[0] = oeeMetrics.oee;
+            oeeChart.data.datasets[0].data[1] = 100 - oeeMetrics.oee;
+            document.getElementById('oeeText').innerText = oeeMetrics.oee.toFixed(2) + '%';
+            oeeChart.update();
         }
-
-        function fetchOeeMetrics() {
-            $.ajax({
-                url: '/calculate-oee',
-                method: 'GET',
-                success: function(response) {
-                    if (response.success) {
-                        updateChart(response.oeeMetrics);
-                    }
-                },
-                error: function(error) {
-                    console.error('Error fetching OEE metrics:', error);
-                }
-            });
-        }
-
-        @if ($nearestMachineStartTime)
-            var machineStartTime = new Date('{{ $nearestMachineStartTime->machine_start }}');
-            var machineEndTime = new Date('{{ $nearestMachineStartTime->machine_end }}');
-            var countdownElement = document.getElementById('countdown');
-
-            function updateCountdown() {
-                var now = new Date();
-                var timeRemainingStart = machineStartTime - now;
-                var timeRemainingEnd = machineEndTime - now;
-
-                if (timeRemainingStart > 0) {
-                    var days = Math.floor(timeRemainingStart / (1000 * 60 * 60 * 24));
-                    var hours = Math.floor((timeRemainingStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    var minutes = Math.floor((timeRemainingStart % (1000 * 60 * 60)) / (1000 * 60));
-                    var seconds = Math.floor((timeRemainingStart % (1000 * 60)) / 1000);
-
-                    countdownElement.innerHTML = "Shift will starts in " + days + "d " + hours + "h " +
-                        minutes + "m " + seconds + "s ";
-                } else if (timeRemainingEnd > 0) {
-                    var days = Math.floor(timeRemainingEnd / (1000 * 60 * 60 * 24));
-                    var hours = Math.floor((timeRemainingEnd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    var minutes = Math.floor((timeRemainingEnd % (1000 * 60 * 60)) / (1000 * 60));
-                    var seconds = Math.floor((timeRemainingEnd % (1000 * 60)) / 1000);
-
-                    countdownElement.innerHTML = "Shift will ends in " + days + "d " + hours + "h " +
-                        minutes + "m " + seconds + "s ";
-                } else {
-                    countdownElement.innerHTML = "Shift ended";
-                }
-            }
-
-            setInterval(updateCountdown, 1000);
-        @else
-            document.getElementById('countdown').innerHTML = "No upcoming shift time";
-        @endif
 
         @if ($nearestDowntimeSchedule)
             var downtimeStartTime = new Date('{{ $nearestDowntimeSchedule->start_time }}');
@@ -352,9 +318,117 @@
             document.getElementById('downtimeCountdown').innerHTML = "No upcoming downtime schedule";
         @endif
 
+        var fetchOeeMetricsInterval = null;
+
+        function fetchOeeMetrics() {
+            $.ajax({
+                url: '/calculate-oee',
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        updateChart(response.oeeMetrics);
+                    }
+                },
+                error: function(error) {
+                    console.error('Error fetching OEE metrics:', error);
+                }
+            });
+        }
+
+        function startFetchingOeeMetrics() {
+            // fetchOeeMetrics();
+            if (fetchOeeMetricsInterval !== null) {
+                clearInterval(fetchOeeMetricsInterval);
+            }
+            fetchOeeMetricsInterval = setInterval(fetchOeeMetrics, 60000);
+        }
+
+        function stopFetchingOeeMetrics() {
+            if (fetchOeeMetricsInterval !== null) {
+                clearInterval(fetchOeeMetricsInterval);
+                fetchOeeMetricsInterval = null;
+            }
+        }
+
+        @if ($nearestMachineStartTime)
+            var machineStartTime = new Date('{{ $nearestMachineStartTime->machine_start }}');
+            var machineEndTime = new Date('{{ $nearestMachineStartTime->machine_end }}');
+            var countdownElement = document.getElementById('countdown');
+
+            function updateCountdown() {
+                var now = new Date();
+                var timeRemainingStart = machineStartTime - now;
+                var timeRemainingEnd = machineEndTime - now;
+
+                if (timeRemainingStart > 0) {
+                    var days = Math.floor(timeRemainingStart / (1000 * 60 * 60 * 24));
+                    var hours = Math.floor((timeRemainingStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var minutes = Math.floor((timeRemainingStart % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((timeRemainingStart % (1000 * 60)) / 1000);
+
+                    countdownElement.innerHTML = "Shift will starts in " + days + "d " + hours + "h " +
+                        minutes + "m " + seconds + "s ";
+                } else if (timeRemainingEnd > 0) {
+                    var days = Math.floor(timeRemainingEnd / (1000 * 60 * 60 * 24));
+                    var hours = Math.floor((timeRemainingEnd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var minutes = Math.floor((timeRemainingEnd % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((timeRemainingEnd % (1000 * 60)) / 1000);
+
+                    countdownElement.innerHTML = "Shift will ends in " + days + "d " + hours + "h " +
+                        minutes + "m " + seconds + "s ";
+                    if (fetchOeeMetricsInterval === null) {
+                        startFetchingOeeMetrics();
+                    }
+                } else {
+                    countdownElement.innerHTML = "Shift ended";
+                    stopFetchingOeeMetrics();
+                }
+            }
+
+            setInterval(updateCountdown, 1000);
+        @elseif ($nearestMachineEndTime)
+            var machineStartTime = new Date('{{ $nearestMachineEndTime->machine_start }}');
+            var machineEndTime = new Date('{{ $nearestMachineEndTime->machine_end }}');
+            var countdownElement = document.getElementById('countdown');
+
+            function updateCountdown() {
+                var now = new Date();
+                var timeRemainingStart = machineStartTime - now;
+                var timeRemainingEnd = machineEndTime - now;
+
+                if (timeRemainingStart > 0) {
+                    var days = Math.floor(timeRemainingStart / (1000 * 60 * 60 * 24));
+                    var hours = Math.floor((timeRemainingStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var minutes = Math.floor((timeRemainingStart % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((timeRemainingStart % (1000 * 60)) / 1000);
+
+                    countdownElement.innerHTML = "Shift will starts in " + days + "d " + hours + "h " +
+                        minutes + "m " + seconds + "s ";
+                } else if (timeRemainingEnd > 0) {
+                    var days = Math.floor(timeRemainingEnd / (1000 * 60 * 60 * 24));
+                    var hours = Math.floor((timeRemainingEnd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var minutes = Math.floor((timeRemainingEnd % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((timeRemainingEnd % (1000 * 60)) / 1000);
+
+                    countdownElement.innerHTML = "Shift will ends in " + days + "d " + hours + "h " +
+                        minutes + "m " + seconds + "s ";
+                    if (fetchOeeMetricsInterval === null) {
+                        startFetchingOeeMetrics();
+                    }
+                } else {
+                    countdownElement.innerHTML = "Shift ended";
+                    stopFetchingOeeMetrics();
+                }
+            }
+
+            setInterval(updateCountdown, 1000);
+        @else
+            document.getElementById('countdown').innerHTML = "No upcoming shift time";
+        @endif
+
         $(document).ready(function() {
-            fetchOeeMetrics();
-            setInterval(fetchOeeMetrics, 60000); // Check every minute
+            // fetchOeeMetrics();
+            // setInterval(fetchOeeMetrics, 60000); // Check every minute
             setInterval(checkMachineStatus, 60000); // Check every minute
 
             var machineStatus = '{{ $status }}' === 'on';
@@ -365,11 +439,13 @@
                     status: machineStatus ? 'on' : 'stop'
                 }, function(response) {
                     if (response.status === "on") {
-                        $('#toggleMachineStatus').removeClass('btn-danger').addClass('btn-success')
+                        $('#toggleMachineStatus').removeClass('btn-danger').addClass(
+                                'btn-success')
                             .text('ON');
                         machineStatus = true;
                     } else {
-                        $('#toggleMachineStatus').removeClass('btn-success').addClass('btn-danger')
+                        $('#toggleMachineStatus').removeClass('btn-success').addClass(
+                                'btn-danger')
                             .text('STOP');
                         machineStatus = false;
                     }
