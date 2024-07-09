@@ -55,6 +55,18 @@ class OeeController extends Controller
         return view('oee.index', compact('productions', 'latestOeeMetrics', 'status', 'latestReject', 'nearestMachineStartTime', 'nearestMachineEndTime', 'nearestDowntimeSchedule'));
     }
 
+    public function getProductions() {
+        $productions = Production::paginate(10);
+
+            return view('oee.productions', compact('productions'));
+    }
+
+    public function getMetrics() {
+        $metrics = OeeMetric::paginate(10);
+
+            return view('oee.metrics', compact('metrics'));
+    }
+
     private function calculateOeeMetrics()
     {
         $now = Carbon::now();

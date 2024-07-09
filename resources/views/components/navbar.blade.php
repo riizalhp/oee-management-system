@@ -18,8 +18,8 @@
                         Inspect Data
                     </a>
                     <ul class="dropdown-menu dropdown-menu-dark">
-                        <li><a class="dropdown-item" href="#">Production</a></li>
-                        <li><a class="dropdown-item" href="#">OEE Metrics</a></li>
+                        <li><a class="dropdown-item" href="/productions">Production</a></li>
+                        <li><a class="dropdown-item" href="/metrics">OEE Metrics</a></li>
                     </ul>
                 </li>
             </ul>

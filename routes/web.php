@@ -20,6 +20,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [OeeController::class, 'index']);
 
+Route::get('/productions', [OeeController::class, 'getProductions']);
+
+Route::get('/metrics', [OeeController::class, 'getMetrics']);
+
 Route::post('/update-downtime', [OeeController::class, 'updateDowntime']);
 
 Route::post('/toggle-machine-status', [OeeController::class, 'toggleMachineStatus']);
