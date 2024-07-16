@@ -23,10 +23,28 @@
                     </ul>
                 </li>
             </ul>
-            {{-- <form class="d-flex" role="search">
-                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-success" type="submit">Search</button>
-            </form> --}}
+            <div class="d-flex align-items-center text-light">
+                <div class="me-3 px-5">
+                    <h5 class="text-light">Date</h5>
+                    <span id="date">2021-03-28</span>
+                </div>
+                <div class="px-5">
+                    <h5 class="text-light">Time</h5>
+                    <span id="time">06:24:26</span>
+                </div>
+            </div>
         </div>
     </div>
 </nav>
+<script>
+    function updateTime() {
+        const now = new Date();
+        const date = now.toISOString().split('T')[0];
+        const time = now.toTimeString().split(' ')[0];
+        document.getElementById('date').innerText = date;
+        document.getElementById('time').innerText = time;
+    }
+
+    setInterval(updateTime, 1000);
+    updateTime(); // initial call to set the time immediately
+</script>

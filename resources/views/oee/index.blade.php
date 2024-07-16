@@ -26,6 +26,13 @@
             display: inline-block;
         }
 
+        .chart-container-oee-loss {
+            position: relative;
+            height: 150px;
+            width: 150px;
+            display: inline-block;
+        }
+
         .chart-text {
             position: absolute;
             top: 50%;
@@ -46,13 +53,37 @@
             display: flex;
             flex-direction: column;
         }
+
+        .chart-legend {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .legend-color {
+            width: 6px;
+            height: 6px;
+            margin-right: 8px;
+        }
+
+        .legend-text {
+            display: flex;
+            align-items: center;
+            margin-right: 8px;
+        }
     </style>
 </head>
 
 <body>
     <x-navbar></x-navbar>
     <div class="container mb-3">
-        <div class="row text-center mb-3">
+        {{-- <div class="row text-center mb-3">
             <div class="col border py-3 me-3">
                 <h4 class="text-light mb-3">Shift Start Time</h4>
                 <span id="countdown" class="text-light"></span>
@@ -60,6 +91,44 @@
             <div class="col border py-3">
                 <h4 class="text-light mb-3">Downtime Schedule</h4>
                 <span id="downtimeCountdown" class="text-light"></span>
+            </div>
+        </div> --}}
+        <div class="row text-center mb-3">
+            <div class="col-4 border pt-3 me-3">
+                <h4 class="text-light mb-3">Machine Information</h4>
+                <table class="table table-dark">
+                    <tbody>
+                        <tr>
+                            <td>A01</td> {{-- Line --}}
+                            <td>JKT Line Assy A</td> {{-- Line Desc --}}
+                            <td>1</td> {{-- Shift --}}
+                            <td>575</td> {{-- Worktime --}}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col border py-3 me-3">
+                <div class="container">
+                    <h4 class="text-light mb-3">Loading Time</h4>
+                    <h5 class="text-success">
+                        <span style="font-size: larger">26.0</span>
+                        <span>min</span>
+                    </h5>
+                </div>
+            </div>
+            <div class="col border py-3 me-3">
+                <h4 class="text-light mb-3">Total Stop Time</h4>
+                <h5 class="text-danger">
+                    <span style="font-size: larger">12.0</span>
+                    <span>min</span>
+                </h5>
+            </div>
+            <div class="col border py-3">
+                <h4 class="text-light mb-3">Operation Time</h4>
+                <h5 class="text-primary">
+                    <span style="font-size: larger">14.1</span>
+                    <span>min</span>
+                </h5>
             </div>
         </div>
         <div class="row text-center mb-3">
@@ -112,6 +181,115 @@
             </div>
         </div>
         <div class="row text-center">
+            <div class="col-3 border center-vertical me-3">
+                <div class="col center-vertical">
+                    <div class="container">
+                        <h4 class="text-light">Stop Category</h4>
+                        <div class="my-2">
+                            <canvas id="stopCategory"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-5 me-3 center-vertical">
+                <div class="row border p-3 mb-3">
+                    <h4 class="text-light">Output Time</h4>
+                    <table class="table table-dark">
+                        <thead>
+                            <tr>
+                                <th>type</th>
+                                <th>output</th>
+                                <th>cycle_time</th>
+                                <th>qty_cycle</th>
+                                <th>output_time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>B234</td>
+                                <td>23</td>
+                                <td>24</td>
+                                <td>1</td>
+                                <td>9.20</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="row border p-3">
+                    <h4 class="text-light">Quality Loss Time</h4>
+                    <table class="table table-dark">
+                        <thead>
+                            <tr>
+                                <th>type</th>
+                                <th>qty_Wng</th>
+                                <th>cycle_time</th>
+                                <th>qty_cycle</th>
+                                <th>defect_time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>B234</td>
+                                <td>2</td>
+                                <td>24</td>
+                                <td>1</td>
+                                <td>0.800</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col border center-vertical">
+                <div class="container py-3">
+                    <h4 class="text-light">OEE VS Loss</h4>
+                    <div class="chart-container-oee-loss my-2">
+                        <canvas id="oeeLossChart"></canvas>
+                    </div>
+                    <table class="table table-dark table-sm" style="font-size: 12px">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>current</th>
+                                <th>percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="legend-color" style="background-color: red;"></div>Stop_Loss
+                                </td>
+                                <td>12 min</td>
+                                <td>46%</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="legend-color" style="background-color: yellow;"></div>
+                                    Speed_Loss
+                                </td>
+                                <td>5 min</td>
+                                <td>19%</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="legend-color" style="background-color: orange;"></div>
+                                    Quality_Loss
+                                </td>
+                                <td>48 s</td>
+                                <td>3%</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="legend-color" style="background-color: green;"></div>OEE
+                                </td>
+                                <td>8 min</td>
+                                <td>32%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {{-- <div class="row text-center">
             <div class="col center-vertical border py-3 me-3">
                 <div class="container">
                     <!-- Form Machine Start -->
@@ -170,7 +348,7 @@
                     </form>
                 </div>
             </div>
-        </div>
+        </div> --}}
         {{-- <div class="row text-center">
             <div class="col-8">
                 <table class="table table-dark m-3" id="oee-table">
@@ -201,6 +379,104 @@
         </div> --}}
     </div>
     <script>
+        var ctx = document.getElementById('oeeLossChart').getContext('2d');
+        var oeeLossChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Stop_Loss', 'Speed_Loss', 'Quality_Loss', 'OEE'],
+                datasets: [{
+                    data: [12, 5, 0.8, 8], // Nilai dalam menit (Quality_Loss dalam detik)
+                    backgroundColor: ['red', 'yellow', 'orange', 'green'],
+                    borderColor: ['black', 'black', 'black', 'black'],
+                    borderWidth: 1,
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        var stopCtx = document.getElementById('stopCategory').getContext('2d');
+        // Plugin to display data values
+        const dataLabelsPlugin = {
+            id: 'dataLabels',
+            afterDatasetsDraw(chart) {
+                const {
+                    ctx,
+                    data,
+                    chartArea: {
+                        left,
+                        right,
+                        top,
+                        bottom
+                    },
+                    scales: {
+                        y
+                    }
+                } = chart;
+                ctx.save();
+                data.datasets[0].data.forEach((value, index) => {
+                    ctx.font = '12px Arial';
+                    ctx.fillStyle = 'white';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    const x = y.getPixelForTick(index);
+                    ctx.fillText(value, right + 5, x);
+                });
+            }
+        };
+
+        const stopChart = new Chart(stopCtx, {
+            type: 'bar',
+            data: {
+                labels: ["Dandori", "Others", "Tool", "Start_Up", "Breakdown"],
+                datasets: [{
+                    data: [5.3, 1.14, 0.255, 3.5, 3.47],
+                    backgroundColor: [
+                        "rgba(54, 162, 235, 0.2)",
+                        "rgba(54, 162, 235, 0.2)",
+                        "rgba(54, 162, 235, 0.2)",
+                        "rgba(54, 162, 235, 0.2)",
+                        "rgba(54, 162, 235, 0.2)",
+                    ],
+                    borderColor: [
+                        "rgb(54, 162, 235)",
+                        "rgb(54, 162, 235)",
+                        "rgb(54, 162, 235)",
+                        "rgb(54, 162, 235)",
+                        "rgb(54, 162, 235)",
+                    ],
+                    borderWidth: 1,
+                    barThickness: 15
+                }]
+            },
+            options: {
+                indexAxis: "y",
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    dataLabels: dataLabelsPlugin
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            font: {
+                                size: 14,
+                            },
+                        },
+                    },
+                    x: {
+                        display: false, // Hide x-axis
+                    },
+                }
+            }
+        });
+
         function createGaugeChart(ctx, value, label, textId) {
             const chart = new Chart(ctx, {
                 type: 'doughnut',
