@@ -115,7 +115,7 @@
                 <div class="container">
                     <h4 class="text-light mb-3">Loading Time</h4>
                     <h5 class="text-success">
-                        <span style="font-size: larger" id="runtime"></span>
+                        <span style="font-size: larger" id="runtime">0.0</span>
                         <span>min</span>
                     </h5>
                 </div>
@@ -123,14 +123,14 @@
             <div class="col border py-3 me-3">
                 <h4 class="text-light mb-3">Total Stop Time</h4>
                 <h5 class="text-danger">
-                    <span style="font-size: larger" id="stopTime"></span>
+                    <span style="font-size: larger" id="stopTime">0.0</span>
                     <span>min</span>
                 </h5>
             </div>
             <div class="col border py-3">
                 <h4 class="text-light mb-3">Operation Time</h4>
                 <h5 class="text-primary">
-                    <span style="font-size: larger">14.1</span>
+                    <span style="font-size: larger" id="optTime">0.0</span>
                     <span>min</span>
                 </h5>
             </div>
@@ -566,6 +566,8 @@
         var fetchOeeMetricsInterval = null;
         var fetchOeeMetricsIDPInterval = null;
         var fetchAvailabilityInterval = null;
+        var stopTime = 0;
+        var optTime = 0;
 
         function fetchOeeMetrics() {
             $.ajax({
@@ -622,6 +624,42 @@
             }
         }
 
+        // Fungsi untuk mengupdate tampilan timer
+        function updateStopTimer() {
+            stopCount++;
+            var stopMinutes = stopCount / 60;
+            stopTimerDisplay.innerText = stopMinutes.toFixed(1);
+        }
+
+        function updateOptTimer() {
+            optCount++;
+            var optMinutes = optCount / 60;
+            optTimerDisplay.innerText = optMinutes.toFixed(1);
+        }
+
+        // Fungsi untuk memeriksa class button dan mengatur timer
+        function checkButtonClass() {
+            if (button.classList.contains('btn-danger')) {
+                // Mulai timer jika button memiliki class 'btn-danger'
+                if (optTimer) { // Hanya hentikan timer jika sedang berjalan
+                    clearInterval(optTimer);
+                    optTimer = null;
+                }
+                if (!stopTimer) { // Hanya mulai timer jika belum berjalan
+                    stopTimer = setInterval(updateStopTimer, 1000);
+                }
+            } else {
+                // Hentikan timer jika button tidak memiliki class 'btn-danger'
+                if (stopTimer) { // Hanya hentikan timer jika sedang berjalan
+                    clearInterval(stopTimer);
+                    stopTimer = null;
+                }
+                if (!optTimer) { // Hanya mulai timer jika belum berjalan
+                    optTimer = setInterval(updateOptTimer, 1000);
+                }
+            }
+        }
+
         @if ($nearestMachineStartTime)
             var machineStartTime = new Date('{{ $nearestMachineStartTime->start_prod }}');
             var machineEndTime = new Date('{{ $nearestMachineStartTime->finish_prod }}');
@@ -652,15 +690,14 @@
 
                     // countdownElement.innerHTML = "Shift will ends in " + days + "d " + hours + "h " +
                     //     minutes + "m " + seconds + "s ";
+                    var button = document.getElementById('toggleMachineStatus');
                     document.getElementById('runtime').innerText = runtimeDisplay.toFixed(1);
-                    if (fetchOeeMetricsInterval === null && fetchOeeMetricsIDPInterval === null &&
-                        fetchAvailabilityInterval === null) {
-                        startFetchingOeeMetrics();
-                    }
-
+                    checkButtonClass();
                 } else {
                     // countdownElement.innerHTML = "Shift ended";
                     stopFetchingOeeMetrics();
+                    optCount = 0;
+                    stopCount = 0;
                 }
             }
 
@@ -696,6 +733,7 @@
                     // countdownElement.innerHTML = "Shift will ends in " + days + "d " + hours + "h " +
                     //     minutes + "m " + seconds + "s ";
                     document.getElementById('runtime').innerText = runtimeDisplay.toFixed(1);
+                    checkButtonClass();
                     if (fetchOeeMetricsInterval === null && fetchOeeMetricsIDPInterval === null &&
                         fetchAvailabilityInterval === null) {
                         startFetchingOeeMetrics();
@@ -703,6 +741,8 @@
                 } else {
                     // countdownElement.innerHTML = "Shift ended";
                     stopFetchingOeeMetrics();
+                    optCount = 0;
+                    stopCount = 0;
                 }
             }
 
@@ -710,6 +750,18 @@
         @else
             // document.getElementById('countdown').innerHTML = "No upcoming shift time";
         @endif
+
+        // Mendapatkan elemen button dan elemen tampilan timer
+        var button = document.getElementById('toggleMachineStatus');
+        var stopTimerDisplay = document.getElementById('stopTime');
+        var optTimerDisplay = document.getElementById('optTime');
+        var machineStart = new Date('{{ $nearestMachineEndTime->start_prod }}');
+        var machineEnd = new Date('{{ $nearestMachineEndTime->finish_prod }}');
+
+        var stopTimer; // Variable untuk menyimpan interval timer
+        var stopCount = 0; // Variable untuk menyimpan nilai timer
+        var optTimer; // Variable untuk menyimpan interval timer
+        var optCount = 0; // Variable untuk menyimpan nilai timer
 
         $(document).ready(function() {
             // fetchOeeMetrics();

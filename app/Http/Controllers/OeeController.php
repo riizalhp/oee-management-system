@@ -47,7 +47,11 @@ class OeeController extends Controller
             ->orderBy('start_prod', 'asc')
             ->first();
 
-        $idealProduceTime = Item::whereIn('tipe_barang', $nearestMachineEndTime->pluck('tipe_barang'))->sum('ideal_produce_time');
+        $idealProduceTime = 0;
+
+        if ($nearestMachineEndTime) {
+            $idealProduceTime = Item::whereIn('tipe_barang', $nearestMachineEndTime->pluck('tipe_barang'))->sum('ideal_produce_time');
+        }
 
         $latestProduction = Production::latest()->first();
 
