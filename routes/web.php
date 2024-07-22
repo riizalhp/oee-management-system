@@ -28,17 +28,23 @@ Route::post('/update-downtime', [OeeController::class, 'updateDowntime']);
 
 Route::post('/toggle-machine-status', [OeeController::class, 'toggleMachineStatus']);
 
-Route::post('/schedule-downtime', [OeeController::class, 'scheduleDowntime'])->name('schedule-downtime');
+// Route::post('/schedule-downtime', [OeeController::class, 'scheduleDowntime'])->name('schedule-downtime');
 
 Route::post('/items', [OeeController::class, 'storeItem'])->name('items.store');
 
 Route::get('/items', [OeeController::class, 'showItems'])->name('items.index');
 
-Route::post('/update-reject', [OeeController::class, 'updateReject'])->name('update.reject');
+// Route::post('/update-reject', [OeeController::class, 'updateReject'])->name('update.reject');
 
 Route::get('/calculate-oee', [OeeController::class, 'calculateOee']);
 
-Route::post('/machine-start', [OeeController::class, 'machineStartStore'])->name('machine-start.store');
+Route::get('/calculate-availability', [OeeController::class, 'calculateAvailability']);
+
+Route::get('/fetch-oee', [OeeController::class, 'fetchOeeMetrics']);
+
+Route::get('/machine-status', [OeeController::class, 'getMachineStatus']);
+
+// Route::post('/machine-start', [OeeController::class, 'machineStartStore'])->name('machine-start.store');
 
 // Route::get('/api/oee-availability', [OeeController::class, 'calculateAvailability']);
 

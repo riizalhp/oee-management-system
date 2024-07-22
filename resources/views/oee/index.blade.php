@@ -96,22 +96,26 @@
         <div class="row text-center mb-3">
             <div class="col-4 border pt-3 me-3">
                 <h4 class="text-light mb-3">Machine Information</h4>
-                <table class="table table-dark">
-                    <tbody>
-                        <tr>
-                            <td>A01</td> {{-- Line --}}
-                            <td>JKT Line Assy A</td> {{-- Line Desc --}}
-                            <td>1</td> {{-- Shift --}}
-                            <td>575</td> {{-- Worktime --}}
-                        </tr>
-                    </tbody>
-                </table>
+                @if (!$latestProduction)
+                    <p class="text-light">Tidak ada data produksi</p>
+                @else
+                    <table class="table table-dark">
+                        <tbody>
+                            <tr>
+                                <td>{{ $latestProduction->line_produksi }}</td>
+                                <td>{{ $latestProduction->nama_line }}</td>
+                                <td>{{ $latestProduction->shift_produksi }}</td>
+                                <td>{{ $latestProduction->tipe_barang }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                @endif
             </div>
             <div class="col border py-3 me-3">
                 <div class="container">
                     <h4 class="text-light mb-3">Loading Time</h4>
                     <h5 class="text-success">
-                        <span style="font-size: larger">26.0</span>
+                        <span style="font-size: larger" id="runtime"></span>
                         <span>min</span>
                     </h5>
                 </div>
@@ -119,7 +123,7 @@
             <div class="col border py-3 me-3">
                 <h4 class="text-light mb-3">Total Stop Time</h4>
                 <h5 class="text-danger">
-                    <span style="font-size: larger">12.0</span>
+                    <span style="font-size: larger" id="stopTime"></span>
                     <span>min</span>
                 </h5>
             </div>
@@ -450,7 +454,7 @@
                         "rgb(54, 162, 235)",
                     ],
                     borderWidth: 1,
-                    barThickness: 15
+                    barThickness: 15,
                 }]
             },
             options: {
@@ -537,64 +541,31 @@
         }
 
         function updateChart(oeeMetrics) {
+            var availabilityValue = Number(oeeMetrics.availability);
             availabilityChart.data.datasets[0].data[0] = oeeMetrics.availability;
             availabilityChart.data.datasets[0].data[1] = 100 - oeeMetrics.availability;
-            document.getElementById('availabilityText').innerText = oeeMetrics.availability.toFixed(2) + '%';
+            document.getElementById('availabilityText').innerText = availabilityValue.toFixed(2) + '%';
             availabilityChart.update();
-
+            var performanceValue = Number(oeeMetrics.performance);
             performanceChart.data.datasets[0].data[0] = oeeMetrics.performance;
             performanceChart.data.datasets[0].data[1] = 100 - oeeMetrics.performance;
-            document.getElementById('performanceText').innerText = oeeMetrics.performance.toFixed(2) + '%';
+            document.getElementById('performanceText').innerText = performanceValue.toFixed(2) + '%';
             performanceChart.update();
-
+            var qualityValue = Number(oeeMetrics.quality);
             qualityChart.data.datasets[0].data[0] = oeeMetrics.quality;
             qualityChart.data.datasets[0].data[1] = 100 - oeeMetrics.quality;
-            document.getElementById('qualityText').innerText = oeeMetrics.quality.toFixed(2) + '%';
+            document.getElementById('qualityText').innerText = qualityValue.toFixed(2) + '%';
             qualityChart.update();
-
+            var oeeValue = Number(oeeMetrics.oee);
             oeeChart.data.datasets[0].data[0] = oeeMetrics.oee;
             oeeChart.data.datasets[0].data[1] = 100 - oeeMetrics.oee;
-            document.getElementById('oeeText').innerText = oeeMetrics.oee.toFixed(2) + '%';
+            document.getElementById('oeeText').innerText = oeeValue.toFixed(2) + '%';
             oeeChart.update();
         }
 
-        @if ($nearestDowntimeSchedule)
-            var downtimeStartTime = new Date('{{ $nearestDowntimeSchedule->start_time }}');
-            var downtimeEndTime = new Date('{{ $nearestDowntimeSchedule->end_time }}');
-            var downtimeCountdownElement = document.getElementById('downtimeCountdown');
-
-            function updateDowntimeCountdown() {
-                var d_now = new Date();
-                var d_timeRemainingStart = downtimeStartTime - d_now;
-                var d_timeRemainingEnd = downtimeEndTime - d_now;
-
-                if (d_timeRemainingStart > 0) {
-                    var d_days = Math.floor(d_timeRemainingStart / (1000 * 60 * 60 * 24));
-                    var d_hours = Math.floor((d_timeRemainingStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    var d_minutes = Math.floor((d_timeRemainingStart % (1000 * 60 * 60)) / (1000 * 60));
-                    var d_seconds = Math.floor((d_timeRemainingStart % (1000 * 60)) / 1000);
-
-                    downtimeCountdownElement.innerHTML = "Downtime will starts in " + d_days + "d " + d_hours + "h " +
-                        d_minutes + "m " + d_seconds + "s ";
-                } else if (d_timeRemainingEnd > 0) {
-                    var d_days = Math.floor(d_timeRemainingEnd / (1000 * 60 * 60 * 24));
-                    var d_hours = Math.floor((d_timeRemainingEnd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    var d_minutes = Math.floor((d_timeRemainingEnd % (1000 * 60 * 60)) / (1000 * 60));
-                    var d_seconds = Math.floor((d_timeRemainingEnd % (1000 * 60)) / 1000);
-
-                    downtimeCountdownElement.innerHTML = "Downtime will ends in " + d_days + "d " + d_hours + "h " +
-                        d_minutes + "m " + d_seconds + "s ";
-                } else {
-                    downtimeCountdownElement.innerHTML = "Downtime ended";
-                }
-            }
-
-            setInterval(updateDowntimeCountdown, 1000);
-        @else
-            document.getElementById('downtimeCountdown').innerHTML = "No upcoming downtime schedule";
-        @endif
-
         var fetchOeeMetricsInterval = null;
+        var fetchOeeMetricsIDPInterval = null;
+        var fetchAvailabilityInterval = null;
 
         function fetchOeeMetrics() {
             $.ajax({
@@ -611,101 +582,139 @@
             });
         }
 
+        function fetchAvailability() {
+            $.ajax({
+                url: '/calculate-availability',
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        updateChart(response.oeeMetrics);
+                    }
+                },
+                error: function(error) {
+                    console.error('Error fetching OEE metrics:', error);
+                }
+            });
+        }
+
         function startFetchingOeeMetrics() {
             // fetchOeeMetrics();
-            if (fetchOeeMetricsInterval !== null) {
+            if (fetchOeeMetricsInterval !== null && fetchOeeMetricsIDPInterval !== null && fetchAvailabilityInterval !==
+                null) {
                 clearInterval(fetchOeeMetricsInterval);
+                clearInterval(fetchOeeMetricsIDPInterval);
+                clearInterval(fetchAvailabilityInterval);
             }
-            fetchOeeMetricsInterval = setInterval(fetchOeeMetrics, 60000);
+            fetchOeeMetricsInterval = setInterval(fetchOeeMetrics, 1000);
+            fetchOeeMetricsIDPInterval = setInterval(fetchOeeMetrics, {{ $idealProduceTime }} * 60000);
+            fetchAvailabilityInterval = setInterval(fetchAvailability, 60000);
         }
 
         function stopFetchingOeeMetrics() {
-            if (fetchOeeMetricsInterval !== null) {
+            if (fetchOeeMetricsInterval !== null && fetchOeeMetricsIDPInterval !== null && fetchAvailabilityInterval !==
+                null) {
                 clearInterval(fetchOeeMetricsInterval);
                 fetchOeeMetricsInterval = null;
+                clearInterval(fetchOeeMetricsIDPInterval);
+                fetchOeeMetricsIDPInterval = null;
+                clearInterval(fetchAvailabilityInterval);
+                fetchAvailabilityInterval = null;
             }
         }
 
         @if ($nearestMachineStartTime)
-            var machineStartTime = new Date('{{ $nearestMachineStartTime->machine_start }}');
-            var machineEndTime = new Date('{{ $nearestMachineStartTime->machine_end }}');
+            var machineStartTime = new Date('{{ $nearestMachineStartTime->start_prod }}');
+            var machineEndTime = new Date('{{ $nearestMachineStartTime->finish_prod }}');
             var countdownElement = document.getElementById('countdown');
 
             function updateCountdown() {
                 var now = new Date();
                 var timeRemainingStart = machineStartTime - now;
                 var timeRemainingEnd = machineEndTime - now;
+                var runtime = now - machineStartTime;
 
-                if (timeRemainingStart > 0) {
-                    var days = Math.floor(timeRemainingStart / (1000 * 60 * 60 * 24));
-                    var hours = Math.floor((timeRemainingStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    var minutes = Math.floor((timeRemainingStart % (1000 * 60 * 60)) / (1000 * 60));
-                    var seconds = Math.floor((timeRemainingStart % (1000 * 60)) / 1000);
+                // if (timeRemainingStart > 0) {
+                //     // var days = Math.floor(timeRemainingStart / (1000 * 60 * 60 * 24));
+                //     // var hours = Math.floor((timeRemainingStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                //     // var minutes = Math.floor((timeRemainingStart % (1000 * 60 * 60)) / (1000 * 60));
+                //     // var seconds = Math.floor((timeRemainingStart % (1000 * 60)) / 1000);
 
-                    countdownElement.innerHTML = "Shift will starts in " + days + "d " + hours + "h " +
-                        minutes + "m " + seconds + "s ";
-                } else if (timeRemainingEnd > 0) {
-                    var days = Math.floor(timeRemainingEnd / (1000 * 60 * 60 * 24));
-                    var hours = Math.floor((timeRemainingEnd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    var minutes = Math.floor((timeRemainingEnd % (1000 * 60 * 60)) / (1000 * 60));
-                    var seconds = Math.floor((timeRemainingEnd % (1000 * 60)) / 1000);
+                //     // countdownElement.innerHTML = "Shift will starts in " + days + "d " + hours + "h " +
+                //     //     minutes + "m " + seconds + "s ";
+                // } else
+                if (timeRemainingEnd > 0 && timeRemainingStart <= 0) {
+                    // var days = Math.floor(timeRemainingEnd / (1000 * 60 * 60 * 24));
+                    // var hours = Math.floor((timeRemainingEnd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    // var minutes = Math.floor((timeRemainingEnd % (1000 * 60 * 60)) / (1000 * 60));
+                    var minutes = Math.floor((runtime % (1000 * 60 * 60)) / (1000 * 60));
+                    var remainingSeconds = (runtime % (1000 * 60)) / 1000;
+                    var runtimeDisplay = minutes + (remainingSeconds / 60);
 
-                    countdownElement.innerHTML = "Shift will ends in " + days + "d " + hours + "h " +
-                        minutes + "m " + seconds + "s ";
-                    if (fetchOeeMetricsInterval === null) {
+                    // countdownElement.innerHTML = "Shift will ends in " + days + "d " + hours + "h " +
+                    //     minutes + "m " + seconds + "s ";
+                    document.getElementById('runtime').innerText = runtimeDisplay.toFixed(1);
+                    if (fetchOeeMetricsInterval === null && fetchOeeMetricsIDPInterval === null &&
+                        fetchAvailabilityInterval === null) {
                         startFetchingOeeMetrics();
                     }
+
                 } else {
-                    countdownElement.innerHTML = "Shift ended";
+                    // countdownElement.innerHTML = "Shift ended";
                     stopFetchingOeeMetrics();
                 }
             }
 
             setInterval(updateCountdown, 1000);
         @elseif ($nearestMachineEndTime)
-            var machineStartTime = new Date('{{ $nearestMachineEndTime->machine_start }}');
-            var machineEndTime = new Date('{{ $nearestMachineEndTime->machine_end }}');
+            var machineStartTime = new Date('{{ $nearestMachineEndTime->start_prod }}');
+            var machineEndTime = new Date('{{ $nearestMachineEndTime->finish_prod }}');
             var countdownElement = document.getElementById('countdown');
 
             function updateCountdown() {
                 var now = new Date();
                 var timeRemainingStart = machineStartTime - now;
                 var timeRemainingEnd = machineEndTime - now;
+                var runtime = now - machineStartTime;
 
-                if (timeRemainingStart > 0) {
-                    var days = Math.floor(timeRemainingStart / (1000 * 60 * 60 * 24));
-                    var hours = Math.floor((timeRemainingStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    var minutes = Math.floor((timeRemainingStart % (1000 * 60 * 60)) / (1000 * 60));
-                    var seconds = Math.floor((timeRemainingStart % (1000 * 60)) / 1000);
+                // if (timeRemainingStart > 0) {
+                //     // var days = Math.floor(timeRemainingStart / (1000 * 60 * 60 * 24));
+                //     // var hours = Math.floor((timeRemainingStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                //     // var minutes = Math.floor((timeRemainingStart % (1000 * 60 * 60)) / (1000 * 60));
+                //     // var seconds = Math.floor((timeRemainingStart % (1000 * 60)) / 1000);
 
-                    countdownElement.innerHTML = "Shift will starts in " + days + "d " + hours + "h " +
-                        minutes + "m " + seconds + "s ";
-                } else if (timeRemainingEnd > 0) {
-                    var days = Math.floor(timeRemainingEnd / (1000 * 60 * 60 * 24));
-                    var hours = Math.floor((timeRemainingEnd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    var minutes = Math.floor((timeRemainingEnd % (1000 * 60 * 60)) / (1000 * 60));
-                    var seconds = Math.floor((timeRemainingEnd % (1000 * 60)) / 1000);
+                //     // countdownElement.innerHTML = "Shift will starts in " + days + "d " + hours + "h " +
+                //     //     minutes + "m " + seconds + "s ";
+                // } else
+                if (timeRemainingEnd > 0 && timeRemainingStart <= 0) {
+                    // var days = Math.floor(timeRemainingEnd / (1000 * 60 * 60 * 24));
+                    // var hours = Math.floor((timeRemainingEnd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    // var minutes = Math.floor((timeRemainingEnd % (1000 * 60 * 60)) / (1000 * 60));
+                    var minutes = Math.floor((runtime % (1000 * 60 * 60)) / (1000 * 60));
+                    var remainingSeconds = (runtime % (1000 * 60)) / 1000;
+                    var runtimeDisplay = minutes + (remainingSeconds / 60);
 
-                    countdownElement.innerHTML = "Shift will ends in " + days + "d " + hours + "h " +
-                        minutes + "m " + seconds + "s ";
-                    if (fetchOeeMetricsInterval === null) {
+                    // countdownElement.innerHTML = "Shift will ends in " + days + "d " + hours + "h " +
+                    //     minutes + "m " + seconds + "s ";
+                    document.getElementById('runtime').innerText = runtimeDisplay.toFixed(1);
+                    if (fetchOeeMetricsInterval === null && fetchOeeMetricsIDPInterval === null &&
+                        fetchAvailabilityInterval === null) {
                         startFetchingOeeMetrics();
                     }
                 } else {
-                    countdownElement.innerHTML = "Shift ended";
+                    // countdownElement.innerHTML = "Shift ended";
                     stopFetchingOeeMetrics();
                 }
             }
 
             setInterval(updateCountdown, 1000);
         @else
-            document.getElementById('countdown').innerHTML = "No upcoming shift time";
+            // document.getElementById('countdown').innerHTML = "No upcoming shift time";
         @endif
 
         $(document).ready(function() {
             // fetchOeeMetrics();
-            // setInterval(fetchOeeMetrics, 60000); // Check every minute
-            setInterval(checkMachineStatus, 60000); // Check every minute
+            // setInterval(fetchOeeMetrics, 1000); // Check every minute
+            setInterval(checkMachineStatus, 1000); // Check every minute
 
             var machineStatus = '{{ $status }}' === 'on';
 

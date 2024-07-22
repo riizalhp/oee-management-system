@@ -15,9 +15,14 @@ return new class extends Migration
     {
         Schema::create('machine_start_times', function (Blueprint $table) {
             $table->id();
-            $table->dateTime('machine_start');
-            $table->dateTime('machine_end');
-            $table->integer('planned_time');
+            $table->string('line');
+            $table->string('linedesc');
+            $table->string('tipe_barang');
+            $table->date('tanggal');
+            $table->integer('shift');
+            $table->dateTime('start_prod');
+            $table->dateTime('finish_prod');
+            $table->integer('worktime');
             $table->timestamps();
         });
     }

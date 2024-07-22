@@ -16,7 +16,8 @@ return new class extends Migration
         Schema::create('items', function (Blueprint $table) {
             $table->id();
             $table->string('nama_item');
-            $table->integer('idealProduceTime');
+            $table->string('tipe_barang');
+            $table->integer('ideal_produce_time');
             $table->timestamps();
         });
     }

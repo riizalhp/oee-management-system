@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\OeeData;
-use App\Models\Production;
-use App\Models\OeeMetric;
-use App\Models\Downtime;
-use App\Models\Item;
-use App\Models\MachineStartTime;
-use App\Models\MachineStatus;
-use App\Models\ScheduledDowntime;
 use Carbon\Carbon;
+use App\Models\Item;
+use App\Models\OeeData;
+use App\Models\Downtime;
+use App\Models\OeeMetric;
+use App\Models\Production;
+use Illuminate\Http\Request;
+use App\Models\MachineStatus;
+use App\Models\MachineStartTime;
+use App\Models\ScheduledDowntime;
+use Illuminate\Support\Facades\Cache;
 
 class OeeController extends Controller
 {
@@ -21,8 +22,6 @@ class OeeController extends Controller
 
         // return view('oee.index', compact('data'));
 
-        $productions = Production::all();
-
         // Retrieve machine status
         $machineStatus = MachineStatus::latest()->first();
         $status = $machineStatus ? $machineStatus->status : null;
@@ -31,28 +30,52 @@ class OeeController extends Controller
         $latestOeeMetrics = OeeMetric::latest()->first();
         if (!$latestOeeMetrics) {
             $latestOeeMetrics = new OeeMetric();
-            $latestOeeMetrics->availability = 100;
-            $latestOeeMetrics->performance = 100;
-            $latestOeeMetrics->quality = 100;
-            $latestOeeMetrics->oee = 100;
+            $latestOeeMetrics->availability = 0;
+            $latestOeeMetrics->performance = 0;
+            $latestOeeMetrics->quality = 0;
+            $latestOeeMetrics->oee = 0;
             $latestOeeMetrics->reject = 0;
         }
         $latestReject = $latestOeeMetrics->reject;
 
         $now = Carbon::now();
-        $nearestMachineStartTime = MachineStartTime::where('machine_start', '>=', $now)
-            ->orderBy('machine_start', 'asc')
+        $nearestMachineStartTime = MachineStartTime::where('start_prod', '>=', $now)
+            ->orderBy('start_prod', 'asc')
             ->first();
 
-        $nearestMachineEndTime = MachineStartTime::where('machine_end', '>=', $now)
-            ->orderBy('machine_start', 'asc')
+        $nearestMachineEndTime = MachineStartTime::where('finish_prod', '>=', $now)
+            ->orderBy('start_prod', 'asc')
             ->first();
 
-        $nearestDowntimeSchedule = ScheduledDowntime::where('start_time', '>=', $now)
-            ->orderBy('start_time', 'asc')
-            ->first();
+        $idealProduceTime = Item::whereIn('tipe_barang', $nearestMachineEndTime->pluck('tipe_barang'))->sum('ideal_produce_time');
 
-        return view('oee.index', compact('productions', 'latestOeeMetrics', 'status', 'latestReject', 'nearestMachineStartTime', 'nearestMachineEndTime', 'nearestDowntimeSchedule'));
+        $latestProduction = Production::latest()->first();
+
+        return view(
+            'oee.index',
+            compact(
+                'latestProduction',
+                'latestOeeMetrics',
+                'status',
+                'latestReject',
+                'nearestMachineStartTime',
+                'nearestMachineEndTime',
+                'idealProduceTime'
+            ));
+    }
+
+    public function fetchOeeMetrics() {
+        $oeeMetric = OeeMetric::latest()->first();
+        if (!$oeeMetric) {
+            $oeeMetric = new OeeMetric();
+            $oeeMetric->availability = 100;
+            $oeeMetric->performance = 100;
+            $oeeMetric->quality = 100;
+            $oeeMetric->oee = 100;
+            $oeeMetric->reject = 0;
+        }
+
+        return $oeeMetric;
     }
 
     public function getProductions() {
@@ -70,29 +93,29 @@ class OeeController extends Controller
     private function calculateOeeMetrics()
     {
         $now = Carbon::now();
-        $machineActive = MachineStartTime::where('machine_start', '<=', $now)
-            ->where('machine_end', '>=', $now)
-            ->orderBy('machine_start', 'asc')
+        $machineActive = MachineStartTime::where('start_prod', '<=', $now)
+            ->where('finish_prod', '>=', $now)
+            ->orderBy('start_prod', 'asc')
             ->first();
 
-        $plannedTime = $machineActive->planned_time; // Planned time in minutes
-        $machineStart = Carbon::parse($machineActive->machine_start);
-        $machineEnd = Carbon::parse($machineActive->machine_end);
-        $downtimes = Downtime::where('mulai', '>=', $machineStart);
+        $plannedTime = $machineActive->worktime; // Planned time in minutes
+        $start_prod = Carbon::parse($machineActive->start_prod);
+        $finish_prod = Carbon::parse($machineActive->finish_prod);
+        $downtimes = Downtime::where('mulai', '>=', $start_prod);
         $totalDowntime = $downtimes->sum('duration');
 
         // Calculate operatingTime
-        $runtime = $now->diffInMinutes($machineStart); // Example runtime, this should be dynamically calculated
+        $runtime = $now->diffInMinutes($start_prod); // Example runtime, this should be dynamically calculated
         $operatingTime = $runtime - $totalDowntime;
 
         // Calculate Availability
         $availability = ($operatingTime / $plannedTime) * 100;
 
         // Calculate Performance
-        $productions = Production::where('timestamp_capture', '>=', $machineStart)
-            ->where('timestamp_capture', '<=', $machineEnd);
+        $productions = Production::where('timestamp_capture', '>=', $start_prod)
+            ->where('timestamp_capture', '<=', $finish_prod);
         $totalProducedItems = $productions->count();
-        $idealProduceTime = Item::whereIn('nama_item', $productions->pluck('nama_line'))->sum('idealProduceTime');
+        $idealProduceTime = Item::whereIn('tipe_barang', $productions->pluck('tipe_barang'))->sum('idealProduceTime');
         $performance = ($idealProduceTime * $totalProducedItems) / $operatingTime * 100;
 
         // Calculate Quality
@@ -124,6 +147,177 @@ class OeeController extends Controller
         $oeeMetric->save();
 
         return $oeeMetric;
+    }
+
+    public function calculateAvailability()
+    {
+        $now = Carbon::now();
+        $machineActive = MachineStartTime::where('start_prod', '<=', $now)
+            ->where('finish_prod', '>=', $now)
+            ->orderBy('start_prod', 'asc')
+            ->first();
+
+        $plannedTime = $machineActive->worktime; // Planned time in minutes
+        $start_prod = Carbon::parse($machineActive->start_prod);
+        $finish_prod = Carbon::parse($machineActive->finish_prod);
+        $downtimes = Downtime::where('mulai', '>=', $start_prod);
+        $totalDowntime = $downtimes->sum('duration');
+        $latestStatus = MachineStatus::where('start_time', '<=', $start_prod)
+            ->orderBy('start_time', 'desc')
+            ->first();
+        $status = $latestStatus ? $latestStatus->status : false;
+        if (!$status) {
+            $startDown = $now->diffInMinutes($start_prod);
+            $totalDowntime = $totalDowntime + $startDown;
+        }
+
+        // Calculate operatingTime
+        $runtime = $now->diffInMinutes($start_prod); // Example runtime, this should be dynamically calculated
+        $operatingTime = $runtime - $totalDowntime;
+
+        // Calculate Availability
+        $availability = ($operatingTime / $plannedTime) * 100;
+
+        if ($availability < 0) {
+            $availability = 0;
+        } else if ($availability > 100) {
+            $availability = 100;
+        }
+
+        // Calculate Performance
+        $latestOeeMetric =  OeeMetric::where('timestamp', '>=', $start_prod)
+            ->where('timestamp', '<=', $finish_prod)
+            ->orderBy('timestamp', 'desc')
+            ->first();
+        $performance = $latestOeeMetric ? $latestOeeMetric->performance : 0;
+
+        // Calculate Quality
+        $quality =  $latestOeeMetric ? $latestOeeMetric->quality : 0;
+        $rejects =  $latestOeeMetric ? $latestOeeMetric->reject : 0;
+
+        // Calculate OEE
+        $oee = ($availability / 100) * ($performance / 100) * ($quality / 100) * 100;
+
+        // Save OEE metrics to database
+        $oeeMetric = new OeeMetric();
+        $oeeMetric->availability = $availability;
+        $oeeMetric->performance = $performance;
+        $oeeMetric->quality = $quality;
+        $oeeMetric->reject = $rejects;
+        $oeeMetric->oee = $oee;
+        $oeeMetric->timestamp = Carbon::now();
+        $oeeMetric->save();
+
+        return response()->json(['success' => true, 'oeeMetrics' => $oeeMetric]);
+    }
+
+    // private function calculateAvailability()
+    // {
+    //     $now = Carbon::now();
+    //     $machineActive = MachineStartTime::where('start_prod', '<=', $now)
+    //         ->where('finish_prod', '>=', $now)
+    //         ->orderBy('start_prod', 'asc')
+    //         ->first();
+
+    //     $plannedTime = $machineActive->worktime; // Planned time in minutes
+    //     $start_prod = Carbon::parse($machineActive->start_prod);
+    //     $finish_prod = Carbon::parse($machineActive->finish_prod);
+    //     $downtimes = Downtime::where('mulai', '>=', $start_prod);
+    //     $totalDowntime = $downtimes->sum('duration');
+
+    //     // Calculate operatingTime
+    //     $runtime = $now->diffInMinutes($start_prod); // Example runtime, this should be dynamically calculated
+    //     $operatingTime = $runtime - $totalDowntime;
+
+    //     // Calculate Availability
+    //     $availability = ($operatingTime / $plannedTime) * 100;
+
+    //     // Calculate Performance
+    //     $latestOeeMetric =  OeeMetric::where('timestamp', '>=', $start_prod)
+    //     ->where('timestamp', '<=', $finish_prod);
+    //     $performance = $latestOeeMetric ? $latestOeeMetric->performance : 0;
+
+    //     // Calculate Quality
+    //     $quality =  $latestOeeMetric ? $latestOeeMetric->quality : 0;
+    //     $rejects =  $latestOeeMetric ? $latestOeeMetric->reject : 0;
+
+    //     // Calculate OEE
+    //     $oee = ($availability / 100) * ($performance / 100) * ($quality / 100) * 100;
+
+    //     // Save OEE metrics to database
+    //     $oeeMetric = new OeeMetric();
+    //     $oeeMetric->availability = $availability;
+    //     $oeeMetric->performance = $performance;
+    //     $oeeMetric->quality = $quality;
+    //     $oeeMetric->reject = $rejects;
+    //     $oeeMetric->oee = $oee;
+    //     $oeeMetric->timestamp = Carbon::now();
+    //     $oeeMetric->save();
+
+    //     return $oeeMetric;
+    // }
+
+    public function calculateOee() {
+        $now = Carbon::now();
+        $machineActive = MachineStartTime::where('start_prod', '<=', $now)
+            ->where('finish_prod', '>=', $now)
+            ->orderBy('start_prod', 'asc')
+            ->first();
+
+        $start_prod = Carbon::parse($machineActive->start_prod);
+        $finish_prod = Carbon::parse($machineActive->finish_prod);
+        $latestProduct = Production::where('timestamp_capture', '>=', $start_prod)
+            ->where('timestamp_capture', '<', $now)
+            ->orderBy('timestamp_capture', 'desc')
+            ->first();
+        $timeGap = $now->diffInMinutes($latestProduct->timestamp_capture);
+        $downtimes = Downtime::where('mulai', '>=', $start_prod);
+        $totalDowntime = $downtimes->sum('duration');
+        if ($timeGap <= 1) {
+            $runtime = $now->diffInMinutes($start_prod); // Example runtime, this should be dynamically calculated
+            $operatingTime = $runtime - $totalDowntime;
+
+            // Calculate Performance
+            $productions = Production::where('timestamp_capture', '>=', $start_prod)
+                ->where('timestamp_capture', '<=', $finish_prod);
+            $totalProducedItems = $productions->count();
+            $idealProduceTime = Item::whereIn('tipe_barang', $productions->pluck('tipe_barang'))->sum('ideal_produce_time');
+            $performance = ($idealProduceTime * $totalProducedItems) / $operatingTime * 100;
+
+            // Calculate Quality
+            $outputMesin = $totalProducedItems; // Example value
+            $latestOeeMetric =  OeeMetric::where('timestamp', '>=', $start_prod)
+                ->where('timestamp', '<=', $now)
+                ->orderBy('timestamp', 'desc')
+                ->first();
+            $rejects = $latestOeeMetric ? $latestOeeMetric->reject : 0;
+
+            // Check if $outputMesin is greater than zero to avoid DivisionByZeroError
+            if ($outputMesin > 0) {
+                $outputStandar = $outputMesin - $rejects;
+                $quality = ($outputStandar / $outputMesin) * 100;
+            } else {
+                // Handle the case where $outputMesin is zero (or less than or equal to zero)
+                // For example, set quality to zero or handle it based on your business logic.
+                $quality = 0; // or any default value or handling logic
+            }
+            $availability = $latestOeeMetric ? $latestOeeMetric->availability : 0;
+
+            // Calculate OEE
+            $oee = ($availability / 100) * ($performance / 100) * ($quality / 100) * 100;
+
+            // Save OEE metrics to database
+            $oeeMetric = new OeeMetric();
+            $oeeMetric->availability = $availability;
+            $oeeMetric->performance = $performance;
+            $oeeMetric->quality = $quality;
+            $oeeMetric->reject = $rejects;
+            $oeeMetric->oee = $oee;
+            $oeeMetric->timestamp = Carbon::now();
+            $oeeMetric->save();
+
+            return response()->json(['success' => true, 'oeeMetrics' => $oeeMetric]);
+        }
     }
 
     public function updateDowntime(Request $request)
@@ -194,6 +388,13 @@ class OeeController extends Controller
         }
     }
 
+    public function getMachineStatus() {
+        $latestStatus = MachineStatus::latest()->first();
+        $status = $latestStatus ? $latestStatus->status : false;
+        $response = $status ? 'on' : 'stop';
+        return response()->json(['status' => $response]);
+    }
+
     public function scheduleDowntime(Request $request)
     {
         $request->validate([
@@ -251,25 +452,25 @@ class OeeController extends Controller
         return redirect()->back()->with('success', 'Jumlah reject berhasil disimpan');
     }
 
-    public function calculateOee() {
-        $oeeMetrics = $this->calculateOeeMetrics();
-        return response()->json(['success' => true, 'oeeMetrics' => $oeeMetrics]);
-    }
+    // public function calculateOee() {
+    //     $oeeMetrics = $this->calculateOeeMetrics();
+    //     return response()->json(['success' => true, 'oeeMetrics' => $oeeMetrics]);
+    // }
 
-    public function machineStartStore(Request $request)
-    {
-        $request->validate([
-            'machine_start' => 'required|date_format:Y-m-d\TH:i',
-            'machine_end' => 'required|date_format:Y-m-d\TH:i|after:machine_start',
-            'planned_time' => 'required|integer|min:0'
-        ]);
+    // public function start_prodStore(Request $request)
+    // {
+    //     $request->validate([
+    //         'start_prod' => 'required|date_format:Y-m-d\TH:i',
+    //         'finish_prod' => 'required|date_format:Y-m-d\TH:i|after:start_prod',
+    //         'planned_time' => 'required|integer|min:0'
+    //     ]);
 
-        MachineStartTime::create([
-            'machine_start' => $request->machine_start,
-            'machine_end' => $request->machine_end,
-            'planned_time' => $request->planned_time
-        ]);
+    //     MachineStartTime::create([
+    //         'start_prod' => $request->start_prod,
+    //         'finish_prod' => $request->finish_prod,
+    //         'planned_time' => $request->planned_time
+    //     ]);
 
-        return redirect()->back()->with('success', 'Shift time berhasil disimpan');
-    }
+    //     return redirect()->back()->with('success', 'Shift time berhasil disimpan');
+    // }
 }

@@ -25,6 +25,10 @@
                         <input type="text" id="nama_item" name="nama_item" class="form-control" required>
                     </div>
                     <div class="form-group mb-3">
+                        <label for="tipe_barang" class="form-label text-light">Tipe Barang</label>
+                        <input type="text" id="tipe_barang" name="tipe_barang" class="form-control" required>
+                    </div>
+                    <div class="form-group mb-3">
                         <label for="idealProduceTime" class="form-label text-light">Ideal Produce Time (in
                             minutes)</label>
                         <input type="number" id="idealProduceTime" name="idealProduceTime" class="form-control"
@@ -40,6 +44,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Nama Item</th>
+                            <th>Tipe Barang</th>
                             <th>Ideal Produce Time (in minutes)</th>
                         </tr>
                     </thead>
@@ -48,11 +53,15 @@
                             <tr>
                                 <td>{{ $item->id }}</td>
                                 <td>{{ $item->nama_item }}</td>
+                                <td>{{ $item->tipe_barang }}</td>
                                 <td>{{ $item->idealProduceTime }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
+                @if ($items->count() == 0)
+                    <p class="text-light text-center">Belum ada data!</p>
+                @endif
             </div>
         </div>
     </div>

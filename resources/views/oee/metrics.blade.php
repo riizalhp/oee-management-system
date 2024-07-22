@@ -18,30 +18,34 @@
     <x-navbar></x-navbar>
     <div class="container text-center mt-3">
         <h1 class="text-light mb-3">OEE Metrics Data</h1>
-        <table class="table table-dark">
-            <thead>
-                <tr>
-                    <th>Id</th>
-                    <th>Availability</th>
-                    <th>Performance</th>
-                    <th>Quality</th>
-                    <th>OEE</th>
-                    <th>Timestamp</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($metrics as $metric)
+        @if ($metrics->count() == 0)
+            <p class="text-light">Tidak ada data!</p>
+        @else
+            <table class="table table-dark">
+                <thead>
                     <tr>
-                        <td>{{ $metric->id }}</td>
-                        <td>{{ $metric->availability }}</td>
-                        <td>{{ $metric->performance }}</td>
-                        <td>{{ $metric->quality }}</td>
-                        <td>{{ $metric->oee }}</td>
-                        <td>{{ $metric->timestamp }}</td>
+                        <th>Id</th>
+                        <th>Availability</th>
+                        <th>Performance</th>
+                        <th>Quality</th>
+                        <th>OEE</th>
+                        <th>Timestamp</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach ($metrics as $metric)
+                        <tr>
+                            <td>{{ $metric->id }}</td>
+                            <td>{{ $metric->availability }}</td>
+                            <td>{{ $metric->performance }}</td>
+                            <td>{{ $metric->quality }}</td>
+                            <td>{{ $metric->oee }}</td>
+                            <td>{{ $metric->timestamp }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
         <div class="d-flex justify-content-center">
             {{ $metrics->links('vendor.pagination.bootstrap-5') }}
         </div>

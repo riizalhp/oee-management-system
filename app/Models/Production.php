@@ -8,4 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Production extends Model
 {
     use HasFactory;
+
+    protected $dispatchesEvents = [
+        'craeted' => \App\Events\ProductionCreated::class,
+    ];
 }

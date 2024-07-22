@@ -18,32 +18,36 @@
     <x-navbar></x-navbar>
     <div class="container text-center mt-3">
         <h1 class="text-light mb-3">Productions Data</h1>
-        <table class="table table-dark">
-            <thead>
-                <tr>
-                    <th>Id</th>
-                    <th>Line Produksi</th>
-                    <th>Nama Line</th>
-                    <th>Tanggal Produksi</th>
-                    <th>Shift Produksi</th>
-                    <th>Tipe Barang</th>
-                    <th>Timestamp</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($productions as $production)
+        @if ($productions->count() == 0)
+            <p class="text-light">Tidak ada data!</p>
+        @else
+            <table class="table table-dark">
+                <thead>
                     <tr>
-                        <td>{{ $production->id }}</td>
-                        <td>{{ $production->line_produksi }}</td>
-                        <td>{{ $production->nama_line }}</td>
-                        <td>{{ $production->tgl_produksi }}</td>
-                        <td>{{ $production->shift_produksi }}</td>
-                        <td>{{ $production->tipe_barang }}</td>
-                        <td>{{ $production->timestamp_capture }}</td>
+                        <th>Id</th>
+                        <th>Line Produksi</th>
+                        <th>Nama Line</th>
+                        <th>Tanggal Produksi</th>
+                        <th>Shift Produksi</th>
+                        <th>Tipe Barang</th>
+                        <th>Timestamp</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach ($productions as $production)
+                        <tr>
+                            <td>{{ $production->id }}</td>
+                            <td>{{ $production->line_produksi }}</td>
+                            <td>{{ $production->nama_line }}</td>
+                            <td>{{ $production->tgl_produksi }}</td>
+                            <td>{{ $production->shift_produksi }}</td>
+                            <td>{{ $production->tipe_barang }}</td>
+                            <td>{{ $production->timestamp_capture }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
         <div class="d-flex justify-content-center">
             {{ $productions->links('vendor.pagination.bootstrap-5') }}
         </div>
