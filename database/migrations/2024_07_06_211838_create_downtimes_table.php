@@ -20,7 +20,6 @@ return new class extends Migration
             $table->time('mulai');
             $table->time('selesai')->nullable();
             $table->integer('duration')->nullable();
-            $table->integer('downtimeTotal')->nullable();
             $table->timestamps();
         });
     }

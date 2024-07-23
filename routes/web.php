@@ -38,8 +38,6 @@ Route::get('/items', [OeeController::class, 'showItems'])->name('items.index');
 
 Route::get('/calculate-oee', [OeeController::class, 'calculateOee']);
 
-Route::get('/calculate-availability', [OeeController::class, 'calculateAvailability']);
-
 Route::get('/fetch-oee', [OeeController::class, 'fetchOeeMetrics']);
 
 Route::get('/machine-status', [OeeController::class, 'getMachineStatus']);

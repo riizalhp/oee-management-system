@@ -96,20 +96,24 @@
         <div class="row text-center mb-3">
             <div class="col-4 border pt-3 me-3">
                 <h4 class="text-light mb-3">Machine Information</h4>
-                @if (!$latestProduction)
-                    <p class="text-light">Tidak ada data produksi</p>
-                @else
-                    <table class="table table-dark">
-                        <tbody>
-                            <tr>
-                                <td>{{ $latestProduction->line_produksi }}</td>
-                                <td>{{ $latestProduction->nama_line }}</td>
-                                <td>{{ $latestProduction->shift_produksi }}</td>
-                                <td>{{ $latestProduction->tipe_barang }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                @endif
+                <table class="table table-dark">
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div id="lineProduksi">-</div>
+                            </td>
+                            <td>
+                                <div id="namaLine">-</div>
+                            </td>
+                            <td>
+                                <div id="shiftProduksi">-</div>
+                            </td>
+                            <td>
+                                <div id="tipeBarang">-</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
             <div class="col border py-3 me-3">
                 <div class="container">
@@ -210,11 +214,21 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td>B234</td>
-                                <td>23</td>
-                                <td>24</td>
-                                <td>1</td>
-                                <td>9.20</td>
+                                <td>
+                                    <div id="type">-</div>
+                                </td>
+                                <td>
+                                    <div id="output">-</div>
+                                </td>
+                                <td>
+                                    <div id="cycleTime">-</div>
+                                </td>
+                                <td>
+                                    <div id="qtyCycle">-</div>
+                                </td>
+                                <td>
+                                    <div id="outputTime">-</div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -225,7 +239,7 @@
                         <thead>
                             <tr>
                                 <th>type</th>
-                                <th>qty_Wng</th>
+                                <th>qty_ng</th>
                                 <th>cycle_time</th>
                                 <th>qty_cycle</th>
                                 <th>defect_time</th>
@@ -233,11 +247,21 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td>B234</td>
-                                <td>2</td>
-                                <td>24</td>
-                                <td>1</td>
-                                <td>0.800</td>
+                                <td>
+                                    <div id="typeQuality">-</div>
+                                </td>
+                                <td>
+                                    <div id="qtyNg">-</div>
+                                </td>
+                                <td>
+                                    <div id="cycleTimeQuality">-</div>
+                                </td>
+                                <td>
+                                    <div id="qtyCycleQuality">-</div>
+                                </td>
+                                <td>
+                                    <div id="defectTime">-</div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -561,13 +585,12 @@
             oeeChart.data.datasets[0].data[1] = 100 - oeeMetrics.oee;
             document.getElementById('oeeText').innerText = oeeValue.toFixed(2) + '%';
             oeeChart.update();
+            document.getElementById('runtime').innerText = oeeMetrics.runtime;
+            document.getElementById('stopTime').innerText = oeeMetrics.downtime;
+            document.getElementById('optTime').innerText = oeeMetrics.operating_time;
         }
 
         var fetchOeeMetricsInterval = null;
-        var fetchOeeMetricsIDPInterval = null;
-        var fetchAvailabilityInterval = null;
-        var stopTime = 0;
-        var optTime = 0;
 
         function fetchOeeMetrics() {
             $.ajax({
@@ -584,79 +607,18 @@
             });
         }
 
-        function fetchAvailability() {
-            $.ajax({
-                url: '/calculate-availability',
-                method: 'GET',
-                success: function(response) {
-                    if (response.success) {
-                        updateChart(response.oeeMetrics);
-                    }
-                },
-                error: function(error) {
-                    console.error('Error fetching OEE metrics:', error);
-                }
-            });
-        }
-
         function startFetchingOeeMetrics() {
             // fetchOeeMetrics();
-            if (fetchOeeMetricsInterval !== null && fetchOeeMetricsIDPInterval !== null && fetchAvailabilityInterval !==
-                null) {
+            if (fetchOeeMetricsInterval !== null) {
                 clearInterval(fetchOeeMetricsInterval);
-                clearInterval(fetchOeeMetricsIDPInterval);
-                clearInterval(fetchAvailabilityInterval);
             }
             fetchOeeMetricsInterval = setInterval(fetchOeeMetrics, 1000);
-            fetchOeeMetricsIDPInterval = setInterval(fetchOeeMetrics, {{ $idealProduceTime }} * 60000);
-            fetchAvailabilityInterval = setInterval(fetchAvailability, 60000);
         }
 
         function stopFetchingOeeMetrics() {
-            if (fetchOeeMetricsInterval !== null && fetchOeeMetricsIDPInterval !== null && fetchAvailabilityInterval !==
-                null) {
+            if (fetchOeeMetricsInterval !== null) {
                 clearInterval(fetchOeeMetricsInterval);
                 fetchOeeMetricsInterval = null;
-                clearInterval(fetchOeeMetricsIDPInterval);
-                fetchOeeMetricsIDPInterval = null;
-                clearInterval(fetchAvailabilityInterval);
-                fetchAvailabilityInterval = null;
-            }
-        }
-
-        // Fungsi untuk mengupdate tampilan timer
-        function updateStopTimer() {
-            stopCount++;
-            var stopMinutes = stopCount / 60;
-            stopTimerDisplay.innerText = stopMinutes.toFixed(1);
-        }
-
-        function updateOptTimer() {
-            optCount++;
-            var optMinutes = optCount / 60;
-            optTimerDisplay.innerText = optMinutes.toFixed(1);
-        }
-
-        // Fungsi untuk memeriksa class button dan mengatur timer
-        function checkButtonClass() {
-            if (button.classList.contains('btn-danger')) {
-                // Mulai timer jika button memiliki class 'btn-danger'
-                if (optTimer) { // Hanya hentikan timer jika sedang berjalan
-                    clearInterval(optTimer);
-                    optTimer = null;
-                }
-                if (!stopTimer) { // Hanya mulai timer jika belum berjalan
-                    stopTimer = setInterval(updateStopTimer, 1000);
-                }
-            } else {
-                // Hentikan timer jika button tidak memiliki class 'btn-danger'
-                if (stopTimer) { // Hanya hentikan timer jika sedang berjalan
-                    clearInterval(stopTimer);
-                    stopTimer = null;
-                }
-                if (!optTimer) { // Hanya mulai timer jika belum berjalan
-                    optTimer = setInterval(updateOptTimer, 1000);
-                }
             }
         }
 
@@ -671,33 +633,16 @@
                 var timeRemainingEnd = machineEndTime - now;
                 var runtime = now - machineStartTime;
 
-                // if (timeRemainingStart > 0) {
-                //     // var days = Math.floor(timeRemainingStart / (1000 * 60 * 60 * 24));
-                //     // var hours = Math.floor((timeRemainingStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                //     // var minutes = Math.floor((timeRemainingStart % (1000 * 60 * 60)) / (1000 * 60));
-                //     // var seconds = Math.floor((timeRemainingStart % (1000 * 60)) / 1000);
-
-                //     // countdownElement.innerHTML = "Shift will starts in " + days + "d " + hours + "h " +
-                //     //     minutes + "m " + seconds + "s ";
-                // } else
                 if (timeRemainingEnd > 0 && timeRemainingStart <= 0) {
-                    // var days = Math.floor(timeRemainingEnd / (1000 * 60 * 60 * 24));
-                    // var hours = Math.floor((timeRemainingEnd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    // var minutes = Math.floor((timeRemainingEnd % (1000 * 60 * 60)) / (1000 * 60));
-                    var minutes = Math.floor((runtime % (1000 * 60 * 60)) / (1000 * 60));
-                    var remainingSeconds = (runtime % (1000 * 60)) / 1000;
-                    var runtimeDisplay = minutes + (remainingSeconds / 60);
-
-                    // countdownElement.innerHTML = "Shift will ends in " + days + "d " + hours + "h " +
-                    //     minutes + "m " + seconds + "s ";
-                    var button = document.getElementById('toggleMachineStatus');
-                    document.getElementById('runtime').innerText = runtimeDisplay.toFixed(1);
-                    checkButtonClass();
+                    document.getElementById('lineProduksi').innerText = '{{ $nearestMachineStartTime->line }}';
+                    document.getElementById('namaLine').innerText = '{{ $nearestMachineStartTime->linedesc }}';
+                    document.getElementById('shiftProduksi').innerText = '{{ $nearestMachineStartTime->shift }}';
+                    document.getElementById('tipeBarang').innerText = '{{ $nearestMachineStartTime->tipe_barang }}';
+                    if (fetchOeeMetricsInterval === null) {
+                        startFetchingOeeMetrics();
+                    }
                 } else {
-                    // countdownElement.innerHTML = "Shift ended";
                     stopFetchingOeeMetrics();
-                    optCount = 0;
-                    stopCount = 0;
                 }
             }
 
@@ -713,55 +658,23 @@
                 var timeRemainingEnd = machineEndTime - now;
                 var runtime = now - machineStartTime;
 
-                // if (timeRemainingStart > 0) {
-                //     // var days = Math.floor(timeRemainingStart / (1000 * 60 * 60 * 24));
-                //     // var hours = Math.floor((timeRemainingStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                //     // var minutes = Math.floor((timeRemainingStart % (1000 * 60 * 60)) / (1000 * 60));
-                //     // var seconds = Math.floor((timeRemainingStart % (1000 * 60)) / 1000);
-
-                //     // countdownElement.innerHTML = "Shift will starts in " + days + "d " + hours + "h " +
-                //     //     minutes + "m " + seconds + "s ";
-                // } else
                 if (timeRemainingEnd > 0 && timeRemainingStart <= 0) {
-                    // var days = Math.floor(timeRemainingEnd / (1000 * 60 * 60 * 24));
-                    // var hours = Math.floor((timeRemainingEnd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    // var minutes = Math.floor((timeRemainingEnd % (1000 * 60 * 60)) / (1000 * 60));
-                    var minutes = Math.floor((runtime % (1000 * 60 * 60)) / (1000 * 60));
-                    var remainingSeconds = (runtime % (1000 * 60)) / 1000;
-                    var runtimeDisplay = minutes + (remainingSeconds / 60);
-
-                    // countdownElement.innerHTML = "Shift will ends in " + days + "d " + hours + "h " +
-                    //     minutes + "m " + seconds + "s ";
-                    document.getElementById('runtime').innerText = runtimeDisplay.toFixed(1);
-                    checkButtonClass();
-                    if (fetchOeeMetricsInterval === null && fetchOeeMetricsIDPInterval === null &&
-                        fetchAvailabilityInterval === null) {
+                    document.getElementById('lineProduksi').innerText = '{{ $nearestMachineEndTime->line }}';
+                    document.getElementById('namaLine').innerText = '{{ $nearestMachineEndTime->linedesc }}';
+                    document.getElementById('shiftProduksi').innerText = '{{ $nearestMachineEndTime->shift }}';
+                    document.getElementById('tipeBarang').innerText = '{{ $nearestMachineEndTime->tipe_barang }}';
+                    if (fetchOeeMetricsInterval === null) {
                         startFetchingOeeMetrics();
                     }
                 } else {
-                    // countdownElement.innerHTML = "Shift ended";
                     stopFetchingOeeMetrics();
-                    optCount = 0;
-                    stopCount = 0;
                 }
             }
 
             setInterval(updateCountdown, 1000);
         @else
-            // document.getElementById('countdown').innerHTML = "No upcoming shift time";
+            // another function here
         @endif
-
-        // Mendapatkan elemen button dan elemen tampilan timer
-        var button = document.getElementById('toggleMachineStatus');
-        var stopTimerDisplay = document.getElementById('stopTime');
-        var optTimerDisplay = document.getElementById('optTime');
-        var machineStart = new Date('{{ $nearestMachineEndTime->start_prod }}');
-        var machineEnd = new Date('{{ $nearestMachineEndTime->finish_prod }}');
-
-        var stopTimer; // Variable untuk menyimpan interval timer
-        var stopCount = 0; // Variable untuk menyimpan nilai timer
-        var optTimer; // Variable untuk menyimpan interval timer
-        var optCount = 0; // Variable untuk menyimpan nilai timer
 
         $(document).ready(function() {
             // fetchOeeMetrics();

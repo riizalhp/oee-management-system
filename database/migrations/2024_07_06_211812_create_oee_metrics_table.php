@@ -16,6 +16,9 @@ return new class extends Migration
         Schema::create('oee_metrics', function (Blueprint $table) {
             $table->id();
             $table->float('availability');
+            $table->float('runtime');
+            $table->float('downtime');
+            $table->float('operating_time');
             $table->float('performance');
             $table->float('quality');
             $table->integer('reject')->default(0);
