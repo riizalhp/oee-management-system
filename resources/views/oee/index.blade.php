@@ -215,7 +215,7 @@
                         <tbody>
                             <tr>
                                 <td>
-                                    <div id="type">-</div>
+                                    <div id="product">-</div>
                                 </td>
                                 <td>
                                     <div id="output">-</div>
@@ -248,19 +248,19 @@
                         <tbody>
                             <tr>
                                 <td>
-                                    <div id="typeQuality">-</div>
+                                    <div id="productQt">-</div>
                                 </td>
                                 <td>
                                     <div id="qtyNg">-</div>
                                 </td>
                                 <td>
-                                    <div id="cycleTimeQuality">-</div>
+                                    <div id="cycleTimeQt">-</div>
                                 </td>
                                 <td>
-                                    <div id="qtyCycleQuality">-</div>
+                                    <div id="qtyCycleQt">-</div>
                                 </td>
                                 <td>
-                                    <div id="defectTime">-</div>
+                                    <div id="defectTimeQt">-</div>
                                 </td>
                             </tr>
                         </tbody>
@@ -286,31 +286,31 @@
                                 <td>
                                     <div class="legend-color" style="background-color: red;"></div>Stop_Loss
                                 </td>
-                                <td>12 min</td>
-                                <td>46%</td>
+                                <td id="stopTimeLoss">-</td>
+                                <td id="stopLossPercent">100%</td>
                             </tr>
                             <tr>
                                 <td>
                                     <div class="legend-color" style="background-color: yellow;"></div>
                                     Speed_Loss
                                 </td>
-                                <td>5 min</td>
-                                <td>19%</td>
+                                <td id="speedLoss">-</td>
+                                <td id="speedLossPercent">0%</td>
                             </tr>
                             <tr>
                                 <td>
                                     <div class="legend-color" style="background-color: orange;"></div>
                                     Quality_Loss
                                 </td>
-                                <td>48 s</td>
-                                <td>3%</td>
+                                <td id="defectTime">-</td>
+                                <td id="qualityLossPercent">0%</td>
                             </tr>
                             <tr>
                                 <td>
                                     <div class="legend-color" style="background-color: green;"></div>OEE
                                 </td>
-                                <td>8 min</td>
-                                <td>32%</td>
+                                <td id="oeeCurrent">-</td>
+                                <td id="oeePercent">0%</td>
                             </tr>
                         </tbody>
                     </table>
@@ -413,7 +413,7 @@
             data: {
                 labels: ['Stop_Loss', 'Speed_Loss', 'Quality_Loss', 'OEE'],
                 datasets: [{
-                    data: [12, 5, 0.8, 8], // Nilai dalam menit (Quality_Loss dalam detik)
+                    data: [100, 0, 0, ], // Nilai dalam menit (Quality_Loss dalam detik)
                     backgroundColor: ['red', 'yellow', 'orange', 'green'],
                     borderColor: ['black', 'black', 'black', 'black'],
                     borderWidth: 1,
@@ -564,7 +564,7 @@
             });
         }
 
-        function updateChart(oeeMetrics) {
+        function updateChart(oeeMetrics, tipeBarang, totalItems, cycleTime, outputTime, cycleCount, defectTime) {
             var availabilityValue = Number(oeeMetrics.availability);
             availabilityChart.data.datasets[0].data[0] = oeeMetrics.availability;
             availabilityChart.data.datasets[0].data[1] = 100 - oeeMetrics.availability;
@@ -585,9 +585,44 @@
             oeeChart.data.datasets[0].data[1] = 100 - oeeMetrics.oee;
             document.getElementById('oeeText').innerText = oeeValue.toFixed(2) + '%';
             oeeChart.update();
-            document.getElementById('runtime').innerText = oeeMetrics.runtime;
-            document.getElementById('stopTime').innerText = oeeMetrics.downtime;
-            document.getElementById('optTime').innerText = oeeMetrics.operating_time;
+            var downtimeValue = Number(oeeMetrics.downtime / 60);
+            var operatingTimeValue = Number(oeeMetrics.operating_time);
+            document.getElementById('runtime').innerText = oeeMetrics.runtime.toFixed(1);
+            document.getElementById('stopTime').innerText = downtimeValue.toFixed(1);
+            document.getElementById('optTime').innerText = operatingTimeValue.toFixed(1);
+            document.getElementById('product').innerText = tipeBarang;
+            document.getElementById('productQt').innerText = tipeBarang;
+            document.getElementById('output').innerText = totalItems;
+            document.getElementById('outputTime').innerText = outputTime;
+            document.getElementById('qtyNg').innerText = oeeMetrics.reject;
+            document.getElementById('defectTime').innerText = defectTime;
+            document.getElementById('defectTimeQt').innerText = defectTime;
+            document.getElementById('cycleTime').innerText = cycleTime;
+            document.getElementById('cycleTimeQt').innerText = cycleTime;
+            document.getElementById('qtyCycle').innerText = cycleCount.toFixed(1);
+            document.getElementById('qtyCycleQt').innerText = cycleCount.toFixed(1);
+            var stopLossPercent = (oeeMetrics.downtime / oeeMetrics.runtime) / 100;
+            document.getElementById('qualityLossPercent').innerText = stopLossPercent.toFixed(1) + '%';
+            document.getElementById('stopTimeLoss').innerText = downtimeValue.toFixed(1);
+            document.getElementById('stopLossPercent').innerText = stopLossPercent.toFixed(1) + '%';
+            var speedLoss = oeeMetrics.operating_time - outputTime;
+            var qualityLossPercent = (defectTime / oeeMetrics.runtime) * 100;
+            document.getElementById('speedLoss').innerText = speedLoss.toFixed(1);
+            var speedLossPercent = 100 - stopLossPercent - qualityLossPercent.toFixed(1);
+            document.getElementById('speedLossPercent').innerText = speedLossPercent.toFixed(1) + '%';
+            var oeeCurrent = oeeMetrics.runtime - speedLoss - defectTime - oeeMetrics.downtime;
+            if (oeeCurrent < 0) {
+                oeeCurrent = 0;
+            } else if (oeeCurrent > 100) {
+                oeeCurrent = 100;
+            }
+            document.getElementById('oeeCurrent').innerText = oeeCurrent.toFixed(1);
+            document.getElementById('oeePercent').innerText = oeeValue.toFixed(1) + '%';
+            oeeLossChart.data.datasets[0].data[0] = stopLossPercent;
+            oeeLossChart.data.datasets[0].data[1] = speedLossPercent;
+            oeeLossChart.data.datasets[0].data[2] = qualityLossPercent;
+            oeeLossChart.data.datasets[0].data[3] = oeeMetrics.oee;
+            oeeLossChart.update();
         }
 
         var fetchOeeMetricsInterval = null;
@@ -598,7 +633,15 @@
                 method: 'GET',
                 success: function(response) {
                     if (response.success) {
-                        updateChart(response.oeeMetrics);
+                        updateChart(
+                            response.oeeMetrics,
+                            response.tipeBarang,
+                            response.totalItems,
+                            response.cycleTime,
+                            response.outputTime,
+                            response.cycleCount,
+                            response.defectTime
+                        );
                     }
                 },
                 error: function(error) {

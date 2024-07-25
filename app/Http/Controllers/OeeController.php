@@ -178,6 +178,7 @@ class OeeController extends Controller
         $runtime = $now->diffInMinutes($start_prod); // Example runtime, this should be dynamically calculated
         $operatingTimeSecs = ($runtimeSecs - $downtime)/60;
         $operatingTime = $runtime - ($downtime/60);
+        $downtimeMins = $downtime/60;
         $rejects = $latestOeeMetric ? $latestOeeMetric->reject : 0;
         $latestProduct = Production::where('timestamp_capture', '>=', $start_prod)
             ->where('timestamp_capture', '<', $now)
@@ -186,6 +187,7 @@ class OeeController extends Controller
         $productions = Production::where('timestamp_capture', '>=', $start_prod)
             ->where('timestamp_capture', '<=', $finish_prod);
         $totalProducedItems = $productions->count();
+        $idealProduceTime = 0;
         $performance = $latestOeeMetric ? $latestOeeMetric->performance : 0;
         if ($latestProduct) {
             $timeGap = $now->diffInMinutes($latestProduct->timestamp_capture);
@@ -198,6 +200,16 @@ class OeeController extends Controller
         }
         // Calculate Quality
         $outputMesin = $totalProducedItems;
+        $tipeBarang = $latestProduct ? $latestProduct->tipe_barang : '-';
+        $outputTime = ($outputMesin*$idealProduceTime)/60;
+        $cycleCount = 0;
+        if ($idealProduceTime != 0) {
+            $cycleCount = $runtime/$idealProduceTime;
+        }
+        $defectTime = 0;
+        if ($rejects != 0 && $idealProduceTime != 0) {
+            $defectTime = ($rejects*$idealProduceTime)/60;
+        }
 
         // Check if $outputMesin is greater than zero to avoid DivisionByZeroError
         if ($outputMesin > 0) {
@@ -248,7 +260,16 @@ class OeeController extends Controller
         $oeeMetric->timestamp = Carbon::now();
         $oeeMetric->save();
 
-        return response()->json(['success' => true, 'oeeMetrics' => $oeeMetric]);
+        return response()->json([
+            'success' => true,
+            'oeeMetrics' => $oeeMetric,
+            'tipeBarang' => $tipeBarang,
+            'totalItems' => $totalProducedItems,
+            'cycleTime' => $idealProduceTime,
+            'outputTime' => $outputTime,
+            'cycleCount' => $cycleCount,
+            'defectTime' => $defectTime
+        ]);
     }
 
     public function updateDowntime(Request $request)
