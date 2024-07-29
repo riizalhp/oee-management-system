@@ -14,22 +14,22 @@
 
         .chart-container {
             position: relative;
-            height: 150px;
-            width: 150px;
+            height: 100px;
+            width: 100px;
             display: inline-block;
         }
 
         .chart-container-oee {
             position: relative;
-            height: 250px;
-            width: 250px;
+            height: 170px;
+            width: 170px;
             display: inline-block;
         }
 
         .chart-container-oee-loss {
             position: relative;
-            height: 150px;
-            width: 150px;
+            height: 120px;
+            width: 120px;
             display: inline-block;
         }
 
@@ -38,7 +38,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 20px;
+            font-size: 16px;
             font-weight: bold;
             color: white;
         }
@@ -82,21 +82,11 @@
 
 <body>
     <x-navbar></x-navbar>
-    <div class="container mb-3">
-        {{-- <div class="row text-center mb-3">
-            <div class="col border py-3 me-3">
-                <h4 class="text-light mb-3">Shift Start Time</h4>
-                <span id="countdown" class="text-light"></span>
-            </div>
-            <div class="col border py-3">
-                <h4 class="text-light mb-3">Downtime Schedule</h4>
-                <span id="downtimeCountdown" class="text-light"></span>
-            </div>
-        </div> --}}
-        <div class="row text-center mb-3">
-            <div class="col-4 border pt-3 me-3">
-                <h4 class="text-light mb-3">Machine Information</h4>
-                <table class="table table-dark">
+    <div class="container mb-2">
+        <div class="row text-center mb-2">
+            <div class="col-4 border pt-2 me-2">
+                <h5 class="text-light mb-2">Machine Information</h5>
+                <table class="table table-dark table-sm">
                     <tbody>
                         <tr>
                             <td>
@@ -115,72 +105,72 @@
                     </tbody>
                 </table>
             </div>
-            <div class="col border py-3 me-3">
+            <div class="col border pt-3 me-2">
                 <div class="container">
-                    <h4 class="text-light mb-3">Loading Time</h4>
+                    <h5 class="text-light mb-2">Loading Time</h5>
                     <h5 class="text-success">
-                        <span style="font-size: larger" id="runtime">0.0</span>
+                        <span id="runtime">0.0</span>
                         <span>min</span>
                     </h5>
                 </div>
             </div>
-            <div class="col border py-3 me-3">
-                <h4 class="text-light mb-3">Total Stop Time</h4>
+            <div class="col border pt-3 me-2">
+                <h5 class="text-light mb-2">Total Stop Time</h5>
                 <h5 class="text-danger">
-                    <span style="font-size: larger" id="stopTime">0.0</span>
+                    <span id="stopTime">0.0</span>
                     <span>min</span>
                 </h5>
             </div>
-            <div class="col border py-3">
-                <h4 class="text-light mb-3">Operation Time</h4>
+            <div class="col border pt-3">
+                <h5 class="text-light mb-2">Operation Time</h5>
                 <h5 class="text-primary">
-                    <span style="font-size: larger" id="optTime">0.0</span>
+                    <span id="optTime">0.0</span>
                     <span>min</span>
                 </h5>
             </div>
         </div>
-        <div class="row text-center mb-3">
+        <div class="row text-center mb-2">
             <div class="col-8">
-                <div class="row mb-3">
-                    <div class="col border pt-3" id="machine-status">
-                        <h4 class="text-light mb-3">Machine Status</h4>
+                <div class="row mb-2">
+                    <div class="col border pt-2" id="machine-status">
+                        <h5 class="text-light mb-2">Machine Status</h5>
                         <button id="toggleMachineStatus"
-                            class="btn btn-lg {{ $status ? 'btn-success' : 'btn-danger' }} mb-3">{{ $status ? 'ON' : 'STOP' }}</button>
+                            class="btn btn-sm {{ $status ? 'btn-success' : 'btn-danger' }} mb-2">{{ $status ? 'ON' : 'STOP' }}</button>
                     </div>
-                    <div class="col border ms-3 py-3">
-                        <h4 class="text-light mb-3">Trouble Information</h4>
+                    <div class="col border ms-2 pt-2">
+                        <h5 class="text-light mb-2">Trouble Information</h5>
                         <span></span>
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col border pt-3 me-3">
-                        <h4 class="text-light">Availability</h4>
-                        <div class="chart-container my-2">
+                    <div class="col border pt-2 me-2">
+                        <h5 class="text-light">Availability</h5>
+                        <div class="chart-container">
                             <canvas id="availabilityChart"></canvas>
                             <div class="chart-text my-2" id="availabilityText"></div>
                         </div>
                     </div>
-                    <div class="col border pt-3 me-3">
-                        <h4 class="text-light">Performance</h4>
-                        <div class="chart-container my-2">
+                    <div class="col border pt-2 me-2">
+                        <h5 class="text-light">Performance</h5>
+                        <div class="chart-container">
                             <canvas id="performanceChart"></canvas>
                             <div class="chart-text my-2" id="performanceText"></div>
                         </div>
                     </div>
-                    <div class="col border pt-3">
-                        <h4 class="text-light">Quality</h4>
-                        <div class="chart-container my-2">
+                    <div class="col border pt-2">
+                        <h5 class="text-light">Quality</h5>
+                        <div class="chart-container">
                             <canvas id="qualityChart"></canvas>
                             <div class="chart-text my-2" id="qualityText"></div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-4 center-vertical">
-                <div class="col border ms-1 center-vertical">
+            <div class="col center-vertical">
+                <div class="col border center-vertical">
                     <div class="container">
-                        <h4 class="text-light">OEE</h4>
-                        <div class="chart-container-oee my-2">
+                        <h5 class="text-light">OEE</h5>
+                        <div class="chart-container-oee">
                             <canvas id="oeeChart"></canvas>
                             <div class="chart-text my-2" id="oeeText"></div>
                         </div>
@@ -189,20 +179,20 @@
             </div>
         </div>
         <div class="row text-center">
-            <div class="col-3 border center-vertical me-3">
+            <div class="col border center-vertical">
                 <div class="col center-vertical">
                     <div class="container">
-                        <h4 class="text-light">Stop Category</h4>
+                        <h5 class="text-light">Stop Category</h5>
                         <div class="my-2">
                             <canvas id="stopCategory"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-5 me-3 center-vertical">
-                <div class="row border p-3 mb-3">
-                    <h4 class="text-light">Output Time</h4>
-                    <table class="table table-dark">
+            <div class="col center-vertical">
+                <div class="container border p-2 mb-2">
+                    <h5 class="text-light">Output Time</h5>
+                    <table class="table table-dark table-sm" style="font-size: 12px">
                         <thead>
                             <tr>
                                 <th>type</th>
@@ -233,9 +223,9 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="row border p-3">
-                    <h4 class="text-light">Quality Loss Time</h4>
-                    <table class="table table-dark">
+                <div class="border p-2">
+                    <h5 class="text-light">Quality Loss Time</h5>
+                    <table class="table table-dark table-sm" style="font-size: 12px">
                         <thead>
                             <tr>
                                 <th>type</th>
@@ -267,144 +257,60 @@
                     </table>
                 </div>
             </div>
-            <div class="col border center-vertical">
-                <div class="container py-3">
-                    <h4 class="text-light">OEE VS Loss</h4>
-                    <div class="chart-container-oee-loss my-2">
-                        <canvas id="oeeLossChart"></canvas>
+            <div class="col border center-vertical text-center">
+                <div class="pt-3 text-center" style="max-width: 300px">
+                    <h5 class="text-light text-center" style="text-align: center">OEE VS Loss</h5>
+                    <div class="d-flex">
+                        <div class="chart-container-oee-loss my-2">
+                            <canvas id="oeeLossChart"></canvas>
+                        </div>
+                        <div class="container">
+                            <table class="table table-dark table-sm ms-2" style="font-size: 12px">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>current</th>
+                                        <th>percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="legend-color" style="background-color: red;"></div>Stop_Loss
+                                        </td>
+                                        <td id="stopTimeLoss">-</td>
+                                        <td id="stopLossPercent">100%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="legend-color" style="background-color: yellow;"></div>
+                                            Speed_Loss
+                                        </td>
+                                        <td id="speedLoss">-</td>
+                                        <td id="speedLossPercent">0%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="legend-color" style="background-color: orange;"></div>
+                                            Quality_Loss
+                                        </td>
+                                        <td id="defectTime">-</td>
+                                        <td id="qualityLossPercent">0%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="legend-color" style="background-color: green;"></div>OEE
+                                        </td>
+                                        <td id="oeeCurrent">-</td>
+                                        <td id="oeePercent">0%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <table class="table table-dark table-sm" style="font-size: 12px">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th>current</th>
-                                <th>percentage</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <div class="legend-color" style="background-color: red;"></div>Stop_Loss
-                                </td>
-                                <td id="stopTimeLoss">-</td>
-                                <td id="stopLossPercent">100%</td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="legend-color" style="background-color: yellow;"></div>
-                                    Speed_Loss
-                                </td>
-                                <td id="speedLoss">-</td>
-                                <td id="speedLossPercent">0%</td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="legend-color" style="background-color: orange;"></div>
-                                    Quality_Loss
-                                </td>
-                                <td id="defectTime">-</td>
-                                <td id="qualityLossPercent">0%</td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="legend-color" style="background-color: green;"></div>OEE
-                                </td>
-                                <td id="oeeCurrent">-</td>
-                                <td id="oeePercent">0%</td>
-                            </tr>
-                        </tbody>
-                    </table>
                 </div>
             </div>
         </div>
-        {{-- <div class="row text-center">
-            <div class="col center-vertical border py-3 me-3">
-                <div class="container">
-                    <!-- Form Machine Start -->
-                    <h4 class="text-light mb-3">Set Shift Time</h4>
-                    <form id="machineStartForm" method="POST" action="{{ route('machine-start.store') }}">
-                        @csrf
-                        <div class="form-group mb-3">
-                            <label for="machine_start" class="form-label text-light">Start Time</label>
-                            <input type="datetime-local" id="machine_start" name="machine_start" class="form-control"
-                                required>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="machine_end" class="form-label text-light">End Time</label>
-                            <input type="datetime-local" id="machine_end" name="machine_end" class="form-control"
-                                required>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="planned_time" class="form-label text-light">Planned Time</label>
-                            <input type="number" id="planned_time" name="planned_time" class="form-control" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Submit</button>
-                    </form>
-                </div>
-            </div>
-            <div class="col center-vertical border me-3">
-                <div class="container py-3">
-                    <h4 class="text-light mb-3">Set Downtime Schedule</h4>
-                    <!-- Form Downtime Terjadwal -->
-                    <form id="scheduleDowntimeForm" method="POST" action="/schedule-downtime">
-                        @csrf
-                        <div class="form-group mb-3">
-                            <label for="start_time" class="form-label text-light">Start Time</label>
-                            <input type="datetime-local" id="start_time" name="start_time" class="form-control"
-                                required>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="end_time" class="form-label text-light">End Time (optional)</label>
-                            <input type="datetime-local" id="end_time" name="end_time" class="form-control">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Submit</button>
-                    </form>
-                </div>
-            </div>
-            <div class="col center-vertical border">
-                <div class="container">
-                    <h4 class="text-light mb-3">Input Reject Item</h4>
-                    <!-- Form untuk mengisi reject -->
-                    <form method="POST" action="{{ route('update.reject') }}">
-                        @csrf
-                        <div class="form-group mb-3">
-                            <label for="reject" class="form-label text-light">Jumlah Reject</label>
-                            <input type="number" id="reject" name="reject" class="form-control"
-                                value="{{ $latestReject ?? 0 }}" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Submit</button>
-                    </form>
-                </div>
-            </div>
-        </div> --}}
-        {{-- <div class="row text-center">
-            <div class="col-8">
-                <table class="table table-dark m-3" id="oee-table">
-                    <thead>
-                        <tr>
-                            <th>Line</th>
-                            <th>Nama Line</th>
-                            <th>Tanggal</th>
-                            <th>Shift</th>
-                            <th>Tipe</th>
-                            <th>Timestamp</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($productions as $production)
-                            <tr>
-                                <td>{{ $production->line_produksi }}</td>
-                                <td>{{ $production->nama_line }}</td>
-                                <td>{{ $production->tgl_produksi }}</td>
-                                <td>{{ $production->shift_produksi }}</td>
-                                <td>{{ $production->tipe_barang }}</td>
-                                <td>{{ $production->timestamp_capture }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div> --}}
     </div>
     <script>
         var ctx = document.getElementById('oeeLossChart').getContext('2d');
@@ -723,27 +629,6 @@
             // fetchOeeMetrics();
             // setInterval(fetchOeeMetrics, 1000); // Check every minute
             setInterval(checkMachineStatus, 1000); // Check every minute
-
-            var machineStatus = '{{ $status }}' === 'on';
-
-            $('#toggleMachineStatus').click(function() {
-                $.post('/toggle-machine-status', {
-                    _token: '{{ csrf_token() }}',
-                    status: machineStatus ? 'on' : 'stop'
-                }, function(response) {
-                    if (response.status === "on") {
-                        $('#toggleMachineStatus').removeClass('btn-danger').addClass(
-                                'btn-success')
-                            .text('ON');
-                        machineStatus = true;
-                    } else {
-                        $('#toggleMachineStatus').removeClass('btn-success').addClass(
-                                'btn-danger')
-                            .text('STOP');
-                        machineStatus = false;
-                    }
-                });
-            });
         });
     </script>
     <script src="{{ asset('js/bootstrap.js') }}"></script>

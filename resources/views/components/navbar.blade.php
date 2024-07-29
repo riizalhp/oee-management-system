@@ -1,7 +1,7 @@
-<nav class="navbar border-bottom mb-3 navbar-dark navbar-expand-lg bg-body-dark p-3">
+<nav class="navbar border-bottom mb-2 navbar-dark navbar-expand-lg bg-body-dark p-2">
     <div class="container-fluid">
         <a class="navbar-brand" href="/">
-            <h1>OEE Monitoring System</h1>
+            <h5>OEE Monitoring System</h5>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
             aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -24,12 +24,12 @@
                 </li>
             </ul>
             <div class="d-flex align-items-center text-light">
-                <div class="me-3 px-5">
-                    <h5 class="text-light">Date</h5>
+                <div class="pe-5 d-flex align-items-center">
+                    <span class="text-light me-2"><b>Date</b></span>
                     <span id="date">2021-03-28</span>
                 </div>
-                <div class="px-5">
-                    <h5 class="text-light">Time</h5>
+                <div class="pe-2 d-flex align-items-center">
+                    <span class="text-light me-2"><b>Time</b></span>
                     <span id="time">06:24:26</span>
                 </div>
             </div>

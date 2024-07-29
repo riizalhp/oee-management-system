@@ -341,8 +341,31 @@ class OeeController extends Controller
     }
 
     public function getMachineStatus() {
-        $latestStatus = MachineStatus::latest()->first();
-        $status = $latestStatus ? $latestStatus->status : false;
+        $machineStatus = MachineStatus::latest()->first();
+        $status = $machineStatus->status;
+        $now = Carbon::now();
+        $latestDowntime = Downtime::where('mulai', '<=', $now)
+            ->where('selesai')
+            ->orderBy('mulai', 'asc')
+            ->first();
+        if ($latestDowntime) {
+            $mulai = Carbon::parse($latestDowntime->mulai);
+            $selesai = Carbon::parse($latestDowntime->selesai);
+            if ($mulai <= $now) {
+                if ($status) {
+                    $machineStatus->status = !$machineStatus->status;
+                    $machineStatus->stop_time = now();
+                    $machineStatus->save();
+                }
+            } else if ($selesai >= $now) {
+                if (!$status) {
+                    $machineStatus = new MachineStatus();
+                    $machineStatus->status = true;
+                    $machineStatus->start_time = now();
+                    $machineStatus->save();
+                }
+            }
+        }
         $response = $status ? 'on' : 'stop';
         return response()->json(['status' => $response]);
     }
