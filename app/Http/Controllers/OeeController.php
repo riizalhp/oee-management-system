@@ -260,6 +260,17 @@ class OeeController extends Controller
         $oeeMetric->timestamp = Carbon::now();
         $oeeMetric->save();
 
+        $dandori = Downtime::where('downtimedesc', '=', 'Dandori')
+            ->sum('duration');
+        $others = Downtime::where('downtimedesc', '=', 'Others')
+            ->sum('duration');
+        $tool = Downtime::where('downtimedesc', '=', 'Tool')
+            ->sum('duration');
+        $start_up = Downtime::where('downtimedesc', '=', 'Start_Up')
+            ->sum('duration');
+        $breakdown = Downtime::where('downtimedesc', '=', 'Breakdown')
+            ->sum('duration');
+
         return response()->json([
             'success' => true,
             'oeeMetrics' => $oeeMetric,
@@ -268,7 +279,14 @@ class OeeController extends Controller
             'cycleTime' => $idealProduceTime,
             'outputTime' => $outputTime,
             'cycleCount' => $cycleCount,
-            'defectTime' => $defectTime
+            'defectTime' => $defectTime,
+            'dandori' => $dandori,
+            'others' => $others,
+            'tool' => $tool,
+            'start_up' => $start_up,
+            'breakdown' => $breakdown,
+            'productions' => $productions,
+            'start_prod' => $start_prod
         ]);
     }
 
@@ -396,7 +414,8 @@ class OeeController extends Controller
 
         $item = new Item();
         $item->nama_item = $request->nama_item;
-        $item->idealProduceTime = $request->idealProduceTime;
+        $item->tipe_barang = $request->tipe_barang;
+        $item->ideal_produce_time = $request->idealProduceTime;
         $item->save();
 
         return redirect()->back()->with('success', 'Item berhasil ditambahkan');

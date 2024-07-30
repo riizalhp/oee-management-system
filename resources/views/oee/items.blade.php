@@ -54,7 +54,7 @@
                                 <td>{{ $item->id }}</td>
                                 <td>{{ $item->nama_item }}</td>
                                 <td>{{ $item->tipe_barang }}</td>
-                                <td>{{ $item->idealProduceTime }}</td>
+                                <td>{{ $item->ideal_produce_time }}</td>
                             </tr>
                         @endforeach
                     </tbody>

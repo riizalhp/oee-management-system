@@ -77,6 +77,64 @@
             align-items: center;
             margin-right: 8px;
         }
+
+        .chart-container-stop {
+            width: 350px;
+        }
+
+        .chart-row {
+            display: flex;
+            align-items: center;
+        }
+
+        .category {
+            flex: 1;
+            margin-right: 10px;
+            font-size: 13px
+        }
+
+        .bar-container {
+            flex: 3;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(10px, 1fr));
+            gap: 2px;
+            background-color: #444;
+            padding: 5px;
+            border-radius: 5px;
+            margin: 3px 0;
+        }
+
+        .bar {
+            height: 15px;
+            background-color: #1e90ff;
+            border-radius: 1px;
+        }
+
+        .time {
+            flex: 1;
+            text-align: right;
+            font-size: 12px;
+            color: white;
+        }
+
+        .modal-dark {
+            background-color: #000;
+            color: #fff;
+        }
+
+        .modal-dark .modal-content {
+            background-color: #000;
+            color: #fff;
+        }
+
+        .modal-dark .modal-header,
+        .modal-dark .modal-footer {
+            border-color: #444;
+        }
+
+        .modal-dark .btn-close {
+            filter: invert(1);
+        }
     </style>
 </head>
 
@@ -134,8 +192,9 @@
                 <div class="row mb-2">
                     <div class="col border pt-2" id="machine-status">
                         <h5 class="text-light mb-2">Machine Status</h5>
-                        <button id="toggleMachineStatus"
-                            class="btn btn-sm {{ $status ? 'btn-success' : 'btn-danger' }} mb-2">{{ $status ? 'ON' : 'STOP' }}</button>
+                        <div id="toggleMachineStatus"
+                            class="btn btn-sm {{ $status ? 'btn-success' : 'btn-danger' }} mb-2">
+                            {{ $status ? 'ON' : 'STOP' }}</div>
                     </div>
                     <div class="col border ms-2 pt-2">
                         <h5 class="text-light mb-2">Trouble Information</h5>
@@ -183,8 +242,37 @@
                 <div class="col center-vertical">
                     <div class="container">
                         <h5 class="text-light">Stop Category</h5>
-                        <div class="my-2">
-                            <canvas id="stopCategory"></canvas>
+                        <div class="chart-container-stop">
+                            <div class="chart-row">
+                                <div class="category text-light">Dandori</div>
+                                <div class="bar-container" id="dandori">
+                                </div>
+                                <div class="time" id="dandoriTime">0.0 min</div>
+                            </div>
+                            <div class="chart-row">
+                                <div class="category text-light">Others</div>
+                                <div class="bar-container" id="others">
+                                </div>
+                                <div class="time" id="othersTime">0.0 min</div>
+                            </div>
+                            <div class="chart-row">
+                                <div class="category text-light">Tool</div>
+                                <div class="bar-container" id="tool">
+                                </div>
+                                <div class="time" id="toolTime">0.0 min</div>
+                            </div>
+                            <div class="chart-row">
+                                <div class="category text-light">Start_Up</div>
+                                <div class="bar-container" id="start_up">
+                                </div>
+                                <div class="time" id="startUpTime">0.0 min</div>
+                            </div>
+                            <div class="chart-row">
+                                <div class="category text-light">Breakdown</div>
+                                <div class="bar-container" id="breakdown">
+                                </div>
+                                <div class="time" id="breakdownTime">0.0 min</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -205,7 +293,12 @@
                         <tbody>
                             <tr>
                                 <td>
-                                    <div id="product">-</div>
+                                    <div>
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal"
+                                            id="product" style="text-decoration: none; color: white">
+                                            -
+                                        </a>
+                                    </div>
                                 </td>
                                 <td>
                                     <div id="output">-</div>
@@ -238,7 +331,12 @@
                         <tbody>
                             <tr>
                                 <td>
-                                    <div id="productQt">-</div>
+                                    <div>
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal"
+                                            id="productQt" style="text-decoration: none; color: white">
+                                            -
+                                        </a>
+                                    </div>
                                 </td>
                                 <td>
                                     <div id="qtyNg">-</div>
@@ -257,8 +355,55 @@
                     </table>
                 </div>
             </div>
+            <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content modal-dark">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="exampleModalLabel">Production Monitor</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="container text-center">
+                                <canvas id="productionChart" width="400" height="200"></canvas>
+                            </div>
+                            <div class="container text-center mt-3">
+                                <table class="table table-dark table-sm" style="font-size: 12px">
+                                    <thead>
+                                        <tr>
+                                            <th>Id</th>
+                                            <th>Line Produksi</th>
+                                            <th>Nama Line</th>
+                                            <th>Tanggal Produksi</th>
+                                            <th>Shift Produksi</th>
+                                            <th>Tipe Barang</th>
+                                            <th>Timestamp</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="data-production">
+                                        <tr>
+                                            <td>-</td>
+                                            <td>-</td>
+                                            <td>-</td>
+                                            <td>-</td>
+                                            <td>-</td>
+                                            <td>-</td>
+                                            <td>-</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="col border center-vertical text-center">
-                <div class="pt-3 text-center" style="max-width: 300px">
+                <div class="container pt-3 text-center" style="max-width: 300px">
                     <h5 class="text-light text-center" style="text-align: center">OEE VS Loss</h5>
                     <div class="d-flex">
                         <div class="chart-container-oee-loss my-2">
@@ -313,6 +458,36 @@
         </div>
     </div>
     <script>
+        var productionCtx = document.getElementById('productionChart').getContext('2d');
+        var productionChart = new Chart(productionCtx, {
+            type: 'line',
+            data: {
+                labels: ['-'],
+                datasets: [{
+                        label: 'Real Production',
+                        data: [0],
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        fill: false,
+                    },
+                    {
+                        label: 'Ideal Production',
+                        data: [0],
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        fill: false,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+            },
+        })
         var ctx = document.getElementById('oeeLossChart').getContext('2d');
         var oeeLossChart = new Chart(ctx, {
             type: 'doughnut',
@@ -330,83 +505,6 @@
                     legend: {
                         display: false
                     }
-                }
-            }
-        });
-        var stopCtx = document.getElementById('stopCategory').getContext('2d');
-        // Plugin to display data values
-        const dataLabelsPlugin = {
-            id: 'dataLabels',
-            afterDatasetsDraw(chart) {
-                const {
-                    ctx,
-                    data,
-                    chartArea: {
-                        left,
-                        right,
-                        top,
-                        bottom
-                    },
-                    scales: {
-                        y
-                    }
-                } = chart;
-                ctx.save();
-                data.datasets[0].data.forEach((value, index) => {
-                    ctx.font = '12px Arial';
-                    ctx.fillStyle = 'white';
-                    ctx.textAlign = 'left';
-                    ctx.textBaseline = 'middle';
-                    const x = y.getPixelForTick(index);
-                    ctx.fillText(value, right + 5, x);
-                });
-            }
-        };
-
-        const stopChart = new Chart(stopCtx, {
-            type: 'bar',
-            data: {
-                labels: ["Dandori", "Others", "Tool", "Start_Up", "Breakdown"],
-                datasets: [{
-                    data: [5.3, 1.14, 0.255, 3.5, 3.47],
-                    backgroundColor: [
-                        "rgba(54, 162, 235, 0.2)",
-                        "rgba(54, 162, 235, 0.2)",
-                        "rgba(54, 162, 235, 0.2)",
-                        "rgba(54, 162, 235, 0.2)",
-                        "rgba(54, 162, 235, 0.2)",
-                    ],
-                    borderColor: [
-                        "rgb(54, 162, 235)",
-                        "rgb(54, 162, 235)",
-                        "rgb(54, 162, 235)",
-                        "rgb(54, 162, 235)",
-                        "rgb(54, 162, 235)",
-                    ],
-                    borderWidth: 1,
-                    barThickness: 15,
-                }]
-            },
-            options: {
-                indexAxis: "y",
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    dataLabels: dataLabelsPlugin
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            font: {
-                                size: 14,
-                            },
-                        },
-                    },
-                    x: {
-                        display: false, // Hide x-axis
-                    },
                 }
             }
         });
@@ -441,7 +539,12 @@
                 }
             });
 
-            document.getElementById(textId).innerText = value.toFixed(2) + '%';
+            if (value == 100) {
+                document.getElementById(textId).innerText = value.toFixed(0) + '%';
+            } else {
+                document.getElementById(textId).innerText = value.toFixed(2) + '%';
+            }
+
             return chart;
         };
 
@@ -470,26 +573,135 @@
             });
         }
 
+        function addBars(containerId, numberOfBars) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            for (let i = 0; i < numberOfBars; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                container.appendChild(bar);
+            }
+        }
+
+        function updateLineChart(productions, cycleTime, start) {
+            var dataProduksiIdeal = [];
+
+            function pad(num) {
+                return num < 10 ? '0' + num : num;
+            }
+
+            function getTimestamp(date) {
+                return date.getFullYear() + '-' +
+                    pad(date.getMonth() + 1) + '-' +
+                    pad(date.getDate()) + ' ' +
+                    pad(date.getHours()) + ':' +
+                    pad(date.getMinutes()) + ':' +
+                    pad(date.getSeconds());
+            }
+
+            let startTime = new Date(start);
+
+            let endTime = new Date();
+
+            let initialAmount = 0;
+
+            for (let time = startTime; time <= endTime; time.setMinutes(time.getMinutes() + cycleTime)) {
+                let timestamp = getTimestamp(time);
+                let amount = initialAmount + 1;
+                dataProduksiIdeal.push({
+                    amount,
+                    timestamp
+                });
+            }
+
+            var labels = dataProduksiIdeal.map(function(item) {
+                return new Date(item.timestamp).toLocaleTimeString();
+            });
+
+            var dataRiil = productions.map(function(item, index) {
+                return index;
+            });
+
+            var dataIdeal = dataProduksiIdeal.map(function(item) {
+                return item.amount;
+            });
+
+            productionChart.data.labels = labels;
+            productionChart.data.datasets[0].data = dataRiil;
+            productionChart.data.datasets[1].data = dataIdeal;
+            productionChart.update();
+
+            let tableBody = $('#data-production');
+            tableBody.empty();
+            productions.forEach(function(item, index) {
+                let row = `<tr>
+                                <td>{index+1}</td>
+                                <td>{item.line_produksi}</td>
+                                <td>{item.nama_line}</td>
+                                <td>{item.tgl_produksi}</td>
+                                <td>{item.shift_produksi}</td>
+                                <td>{item.tipe_barang}</td>
+                                <td>{item.timestamp_capture}</td>
+                            </tr>`;
+                tableBody.append(row);
+            });
+        }
+
+        function updateStopcategory(dandori, others, tool, startUp, breakdown) {
+            var dandoriCount = dandori * 2;
+            var othersCount = others * 2;
+            var toolCount = tool * 2;
+            var startUpCount = startUp * 2;
+            var breakdownCount = breakdown * 2;
+
+            addBars('dandori', dandoriCount);
+            document.getElementById('dandoriTime').innerHTML = dandori + ' min';
+            addBars('others', othersCount);
+            document.getElementById('othersTime').innerHTML = others + ' min';
+            addBars('tool', toolCount);
+            document.getElementById('toolTime').innerHTML = tool + ' min';
+            addBars('startUp', startUpCount);
+            document.getElementById('startUpTime').innerHTML = startUp + ' min';
+            addBars('breakdown', breakdownCount);
+            document.getElementById('breakdownTime').innerHTML = breakdown + ' min';
+        }
+
         function updateChart(oeeMetrics, tipeBarang, totalItems, cycleTime, outputTime, cycleCount, defectTime) {
             var availabilityValue = Number(oeeMetrics.availability);
             availabilityChart.data.datasets[0].data[0] = oeeMetrics.availability;
             availabilityChart.data.datasets[0].data[1] = 100 - oeeMetrics.availability;
-            document.getElementById('availabilityText').innerText = availabilityValue.toFixed(2) + '%';
+            if (availabilityValue == 100) {
+                document.getElementById('availabilityText').innerText = availabilityValue.toFixed(0) + '%';
+            } else {
+                document.getElementById('availabilityText').innerText = availabilityValue.toFixed(2) + '%';
+            }
             availabilityChart.update();
             var performanceValue = Number(oeeMetrics.performance);
             performanceChart.data.datasets[0].data[0] = oeeMetrics.performance;
             performanceChart.data.datasets[0].data[1] = 100 - oeeMetrics.performance;
-            document.getElementById('performanceText').innerText = performanceValue.toFixed(2) + '%';
+            if (performanceValue == 100) {
+                document.getElementById('performanceText').innerText = performanceValue.toFixed(0) + '%';
+            } else {
+                document.getElementById('performanceText').innerText = performanceValue.toFixed(2) + '%';
+            }
             performanceChart.update();
             var qualityValue = Number(oeeMetrics.quality);
             qualityChart.data.datasets[0].data[0] = oeeMetrics.quality;
             qualityChart.data.datasets[0].data[1] = 100 - oeeMetrics.quality;
-            document.getElementById('qualityText').innerText = qualityValue.toFixed(2) + '%';
+            if (qualityValue == 100) {
+                document.getElementById('qualityText').innerText = qualityValue.toFixed(0) + '%';
+            } else {
+                document.getElementById('qualityText').innerText = qualityValue.toFixed(2) + '%';
+            }
             qualityChart.update();
             var oeeValue = Number(oeeMetrics.oee);
             oeeChart.data.datasets[0].data[0] = oeeMetrics.oee;
             oeeChart.data.datasets[0].data[1] = 100 - oeeMetrics.oee;
-            document.getElementById('oeeText').innerText = oeeValue.toFixed(2) + '%';
+            if (oeeValue == 100) {
+                document.getElementById('oeeText').innerText = oeeValue.toFixed(0) + '%';
+            } else {
+                document.getElementById('oeeText').innerText = oeeValue.toFixed(2) + '%';
+            }
             oeeChart.update();
             var downtimeValue = Number(oeeMetrics.downtime / 60);
             var operatingTimeValue = Number(oeeMetrics.operating_time);
@@ -548,6 +760,18 @@
                             response.cycleCount,
                             response.defectTime
                         );
+                        updateStopcategory(
+                            response.dandori,
+                            response.others,
+                            response.tool,
+                            response.start_up,
+                            response.breakdown
+                        )
+                        updateLineChart(
+                            response.productions,
+                            response.cycleTime,
+                            response.start_prod
+                        )
                     }
                 },
                 error: function(error) {
@@ -587,6 +811,8 @@
                     document.getElementById('namaLine').innerText = '{{ $nearestMachineStartTime->linedesc }}';
                     document.getElementById('shiftProduksi').innerText = '{{ $nearestMachineStartTime->shift }}';
                     document.getElementById('tipeBarang').innerText = '{{ $nearestMachineStartTime->tipe_barang }}';
+                    document.getElementById('exampleModalLabel').innerText =
+                        'Production of {{ $nearestMachineStartTime->tipe_barang }}';
                     if (fetchOeeMetricsInterval === null) {
                         startFetchingOeeMetrics();
                     }
@@ -612,6 +838,8 @@
                     document.getElementById('namaLine').innerText = '{{ $nearestMachineEndTime->linedesc }}';
                     document.getElementById('shiftProduksi').innerText = '{{ $nearestMachineEndTime->shift }}';
                     document.getElementById('tipeBarang').innerText = '{{ $nearestMachineEndTime->tipe_barang }}';
+                    document.getElementById('exampleModalLabel').innerText =
+                        'Production of {{ $nearestMachineEndTime->tipe_barang }}';
                     if (fetchOeeMetricsInterval === null) {
                         startFetchingOeeMetrics();
                     }
