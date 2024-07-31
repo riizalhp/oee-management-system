@@ -6,6 +6,8 @@
     <!-- Add CSS and JS here -->
     <link href="{{ asset('css/bootstrap.css') }}" rel="stylesheet"> <!-- Tautan CSS Bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@1.26.0/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body {
@@ -485,7 +487,7 @@
                     legend: {
                         position: 'top',
                     }
-                },
+                }
             },
         })
         var ctx = document.getElementById('oeeLossChart').getContext('2d');
@@ -560,19 +562,6 @@
         var qualityChart = createGaugeChart(qualityCtx, {{ $latestOeeMetrics->quality }}, 'Quality', 'qualityText');
         var oeeChart = createGaugeChart(oeeCtx, {{ $latestOeeMetrics->oee }}, 'OEE', 'oeeText');
 
-
-        // window.onload = function() {};
-
-        function checkMachineStatus() {
-            $.get('/machine-status', function(response) {
-                if (response.status === "on") {
-                    $('#toggleMachineStatus').removeClass('btn-danger').addClass('btn-success').text('ON');
-                } else if (response.status === "stop") {
-                    $('#toggleMachineStatus').removeClass('btn-success').addClass('btn-danger').text('STOP');
-                }
-            });
-        }
-
         function addBars(containerId, numberOfBars) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
@@ -583,90 +572,24 @@
             }
         }
 
-        function updateLineChart(productions, cycleTime, start) {
-            var dataProduksiIdeal = [];
-
-            function pad(num) {
-                return num < 10 ? '0' + num : num;
-            }
-
-            function getTimestamp(date) {
-                return date.getFullYear() + '-' +
-                    pad(date.getMonth() + 1) + '-' +
-                    pad(date.getDate()) + ' ' +
-                    pad(date.getHours()) + ':' +
-                    pad(date.getMinutes()) + ':' +
-                    pad(date.getSeconds());
-            }
-
-            let startTime = new Date(start);
-
-            let endTime = new Date();
-
-            let initialAmount = 0;
-
-            for (let time = startTime; time <= endTime; time.setMinutes(time.getMinutes() + cycleTime)) {
-                let timestamp = getTimestamp(time);
-                let amount = initialAmount + 1;
-                dataProduksiIdeal.push({
-                    amount,
-                    timestamp
-                });
-            }
-
-            var labels = dataProduksiIdeal.map(function(item) {
-                return new Date(item.timestamp).toLocaleTimeString();
-            });
-
-            var dataRiil = productions.map(function(item, index) {
-                return index;
-            });
-
-            var dataIdeal = dataProduksiIdeal.map(function(item) {
-                return item.amount;
-            });
-
-            productionChart.data.labels = labels;
-            productionChart.data.datasets[0].data = dataRiil;
-            productionChart.data.datasets[1].data = dataIdeal;
-            productionChart.update();
-
-            let tableBody = $('#data-production');
-            tableBody.empty();
-            productions.forEach(function(item, index) {
-                let row = `<tr>
-                                <td>{index+1}</td>
-                                <td>{item.line_produksi}</td>
-                                <td>{item.nama_line}</td>
-                                <td>{item.tgl_produksi}</td>
-                                <td>{item.shift_produksi}</td>
-                                <td>{item.tipe_barang}</td>
-                                <td>{item.timestamp_capture}</td>
-                            </tr>`;
-                tableBody.append(row);
-            });
-        }
-
-        function updateStopcategory(dandori, others, tool, startUp, breakdown) {
-            var dandoriCount = dandori * 2;
-            var othersCount = others * 2;
-            var toolCount = tool * 2;
-            var startUpCount = startUp * 2;
-            var breakdownCount = breakdown * 2;
-
-            addBars('dandori', dandoriCount);
-            document.getElementById('dandoriTime').innerHTML = dandori + ' min';
-            addBars('others', othersCount);
-            document.getElementById('othersTime').innerHTML = others + ' min';
-            addBars('tool', toolCount);
-            document.getElementById('toolTime').innerHTML = tool + ' min';
-            addBars('startUp', startUpCount);
-            document.getElementById('startUpTime').innerHTML = startUp + ' min';
-            addBars('breakdown', breakdownCount);
-            document.getElementById('breakdownTime').innerHTML = breakdown + ' min';
-        }
-
-        function updateChart(oeeMetrics, tipeBarang, totalItems, cycleTime, outputTime, cycleCount, defectTime) {
+        function updateChart(
+            oeeMetrics,
+            tipeBarang,
+            totalItems,
+            cycleTime,
+            outputTime,
+            cycleCount,
+            defectTime,
+            dandori,
+            others,
+            tool,
+            startUp,
+            breakdown,
+            productions,
+            cycleTime,
+            start,
+            status
+        ) {
             var availabilityValue = Number(oeeMetrics.availability);
             availabilityChart.data.datasets[0].data[0] = oeeMetrics.availability;
             availabilityChart.data.datasets[0].data[1] = 100 - oeeMetrics.availability;
@@ -676,6 +599,7 @@
                 document.getElementById('availabilityText').innerText = availabilityValue.toFixed(2) + '%';
             }
             availabilityChart.update();
+
             var performanceValue = Number(oeeMetrics.performance);
             performanceChart.data.datasets[0].data[0] = oeeMetrics.performance;
             performanceChart.data.datasets[0].data[1] = 100 - oeeMetrics.performance;
@@ -685,6 +609,7 @@
                 document.getElementById('performanceText').innerText = performanceValue.toFixed(2) + '%';
             }
             performanceChart.update();
+
             var qualityValue = Number(oeeMetrics.quality);
             qualityChart.data.datasets[0].data[0] = oeeMetrics.quality;
             qualityChart.data.datasets[0].data[1] = 100 - oeeMetrics.quality;
@@ -694,6 +619,7 @@
                 document.getElementById('qualityText').innerText = qualityValue.toFixed(2) + '%';
             }
             qualityChart.update();
+
             var oeeValue = Number(oeeMetrics.oee);
             oeeChart.data.datasets[0].data[0] = oeeMetrics.oee;
             oeeChart.data.datasets[0].data[1] = 100 - oeeMetrics.oee;
@@ -703,6 +629,7 @@
                 document.getElementById('oeeText').innerText = oeeValue.toFixed(2) + '%';
             }
             oeeChart.update();
+
             var downtimeValue = Number(oeeMetrics.downtime / 60);
             var operatingTimeValue = Number(oeeMetrics.operating_time);
             document.getElementById('runtime').innerText = oeeMetrics.runtime.toFixed(1);
@@ -741,6 +668,125 @@
             oeeLossChart.data.datasets[0].data[2] = qualityLossPercent;
             oeeLossChart.data.datasets[0].data[3] = oeeMetrics.oee;
             oeeLossChart.update();
+
+            var dandoriCount = dandori * 2;
+            var othersCount = others * 2;
+            var toolCount = tool * 2;
+            var startUpCount = startUp * 2;
+            var breakdownCount = breakdown * 2;
+
+            if (dandoriCount > 14) {
+                dandoriCount = 14;
+            }
+            if (othersCount > 14) {
+                othersCount = 14;
+            }
+            if (toolCount > 14) {
+                toolCount = 14;
+            }
+            if (startUpCount > 14) {
+                startUpCount = 14;
+            }
+            if (breakdownCount > 14) {
+                breakdownCount = 14;
+            }
+
+            addBars('dandori', dandoriCount);
+            document.getElementById('dandoriTime').innerHTML = dandori + ' min';
+            addBars('others', othersCount);
+            document.getElementById('othersTime').innerHTML = others + ' min';
+            addBars('tool', toolCount);
+            document.getElementById('toolTime').innerHTML = tool + ' min';
+            addBars('start_up', startUpCount);
+            document.getElementById('startUpTime').innerHTML = startUp + ' min';
+            addBars('breakdown', breakdownCount);
+            document.getElementById('breakdownTime').innerHTML = breakdown + ' min';
+
+            var dataProduksiIdeal = [];
+
+            function pad(num) {
+                return num < 10 ? '0' + num : num;
+            }
+
+            function getTimestamp(date) {
+                return date.getFullYear() + '-' +
+                    pad(date.getMonth() + 1) + '-' +
+                    pad(date.getDate()) + ' ' +
+                    pad(date.getHours()) + ':' +
+                    pad(date.getMinutes()) + ':' +
+                    pad(date.getSeconds());
+            }
+
+            let startTime = new Date(start);
+
+            let endTime = new Date();
+
+            let initialAmount = 0;
+
+            for (let time = startTime; time <= endTime; time.setMinutes(time.getMinutes() + cycleTime)) {
+                let timestamp_capture = getTimestamp(time);
+                let amount = initialAmount + 1;
+                dataProduksiIdeal.push({
+                    amount,
+                    timestamp_capture
+                });
+            }
+
+            var timestamps = Array.from(new Set([
+                ...productions.map(item => item.timestamp_capture),
+                ...dataProduksiIdeal.map(item => item.timestamp)
+            ])).sort((a, b) => new Date(a) - new Date(b));
+
+            function findDataAtTimestamp(data, timestamp) {
+                var found = data.find(item.timestamp_capture === timestamp);
+                return found ? found.amount || data.indexOf(found) : null;
+            }
+
+            var dataRiilAligned = timestamps.map(timestamp => findDataAtTimestamp(productions, timestamp));
+            var dataIdealAligned = timestamps.map(timestamp => findDataAtTimestamp(dataProduksiIdeal, timestamp));
+
+            var labels = timestamps.map(timestamp => new Date(timestamp).toLocaleTimeString());
+
+            console.log(Array.isArray(productions));
+            console.log(productions);
+
+            var dataRiil = productions.map(function(item, index) {
+                return index;
+            });
+
+            var dataIdeal = dataProduksiIdeal.map(function(item) {
+                return item.amount;
+            });
+
+            productionChart.data.labels = labels;
+            productionChart.data.datasets[0].data = dataRiilAligned;
+            productionChart.data.datasets[1].data = dataIdealAligned;
+            productionChart.update();
+
+            let tableBody = $('#data-production');
+            tableBody.empty();
+            productions.forEach(function(item, index) {
+                let row = `<tr>
+                                <td>${index+1}</td>
+                                <td>${item.line_produksi}</td>
+                                <td>${item.nama_line}</td>
+                                <td>${item.tgl_produksi}</td>
+                                <td>${item.shift_produksi}</td>
+                                <td>${item.tipe_barang}</td>
+                                <td>${item.timestamp_capture}</td>
+                            </tr>`;
+                tableBody.append(row);
+            });
+
+            var toggleButton = document.getElementById('toggleMachineStatus');
+
+            if (status) {
+                toggleButton.className = 'btn btn-sm btn-success mb-2';
+                toggleButton.innerHTML = 'ON';
+            } else {
+                toggleButton.className = 'btn btn-sm btn-danger mb-2';
+                toggleButton.innerHTML = 'STOP';
+            }
         }
 
         var fetchOeeMetricsInterval = null;
@@ -758,20 +804,17 @@
                             response.cycleTime,
                             response.outputTime,
                             response.cycleCount,
-                            response.defectTime
-                        );
-                        updateStopcategory(
+                            response.defectTime,
                             response.dandori,
                             response.others,
                             response.tool,
                             response.start_up,
-                            response.breakdown
-                        )
-                        updateLineChart(
+                            response.breakdown,
                             response.productions,
                             response.cycleTime,
-                            response.start_prod
-                        )
+                            response.start_prod,
+                            response.status
+                        );
                     }
                 },
                 error: function(error) {
@@ -852,12 +895,6 @@
         @else
             // another function here
         @endif
-
-        $(document).ready(function() {
-            // fetchOeeMetrics();
-            // setInterval(fetchOeeMetrics, 1000); // Check every minute
-            setInterval(checkMachineStatus, 1000); // Check every minute
-        });
     </script>
     <script src="{{ asset('js/bootstrap.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"

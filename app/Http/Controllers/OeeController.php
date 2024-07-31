@@ -185,7 +185,8 @@ class OeeController extends Controller
             ->orderBy('timestamp_capture', 'desc')
             ->first();
         $productions = Production::where('timestamp_capture', '>=', $start_prod)
-            ->where('timestamp_capture', '<=', $finish_prod);
+            ->where('timestamp_capture', '<=', $finish_prod)
+            ->get();
         $totalProducedItems = $productions->count();
         $idealProduceTime = 0;
         $performance = $latestOeeMetric ? $latestOeeMetric->performance : 0;
@@ -247,6 +248,33 @@ class OeeController extends Controller
             $oee = 100;
         }
 
+        $machineStatus = MachineStatus::latest()->first();
+        $status = $machineStatus ? $machineStatus->status : false;
+        $now = Carbon::now();
+        $latestDowntime = Downtime::where('mulai', '<=', $now)
+            ->orderBy('mulai', 'asc')
+            ->first();
+        if ($latestDowntime) {
+            $mulai = Carbon::parse($latestDowntime->mulai);
+            $selesai = Carbon::parse($latestDowntime->selesai);
+            if ($mulai <= $now) {
+                if ($status) {
+                    $machineStatus->status = false;
+                    $machineStatus->stop_time = now();
+                    $machineStatus->save();
+                    $status = false;
+                }
+            } else if ($now >= $selesai) {
+                if (!$status) {
+                    $machineStatus = new MachineStatus();
+                    $machineStatus->status = true;
+                    $machineStatus->start_time = now();
+                    $machineStatus->save();
+                    $status = true;
+                }
+            }
+        }
+
         // Save OEE metrics to database
         $oeeMetric = new OeeMetric();
         $oeeMetric->availability = $availability;
@@ -286,7 +314,8 @@ class OeeController extends Controller
             'start_up' => $start_up,
             'breakdown' => $breakdown,
             'productions' => $productions,
-            'start_prod' => $start_prod
+            'start_prod' => $start_prod,
+            'status' => $status
         ]);
     }
 
