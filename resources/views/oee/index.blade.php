@@ -773,7 +773,7 @@
             function findDataAtTimestamp(data, timestamp) {
                 var found = data.find(item => item.timestamp_capture === timestamp);
                 return found ? found.amount || (data.indexOf(found) + 1) :
-                    null; // Menggunakan formula dummy untuk produksi riil
+                    0; // Menggunakan formula dummy untuk produksi riil
             }
 
             // Ekstrak data yang diselaraskan
