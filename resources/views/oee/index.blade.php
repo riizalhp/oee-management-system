@@ -471,6 +471,7 @@
                         borderColor: 'rgba(255, 99, 132, 1)',
                         backgroundColor: 'rgba(255, 99, 132, 0.2)',
                         fill: false,
+                        spanGaps: true
                     },
                     {
                         label: 'Ideal Production',
@@ -478,6 +479,7 @@
                         borderColor: 'rgba(54, 162, 235, 1)',
                         backgroundColor: 'rgba(54, 162, 235, 0.2)',
                         fill: false,
+                        spanGaps: true
                     },
                 ],
             },
@@ -773,7 +775,7 @@
             function findDataAtTimestamp(data, timestamp) {
                 var found = data.find(item => item.timestamp_capture === timestamp);
                 return found ? found.amount || (data.indexOf(found) + 1) :
-                    0; // Menggunakan formula dummy untuk produksi riil
+                    null; // Menggunakan formula dummy untuk produksi riil
             }
 
             // Ekstrak data yang diselaraskan
