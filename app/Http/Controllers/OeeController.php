@@ -251,26 +251,25 @@ class OeeController extends Controller
         $machineStatus = MachineStatus::latest()->first();
         $status = $machineStatus ? $machineStatus->status : false;
         $now = Carbon::now();
-        $latestDowntime = Downtime::where('mulai', '<=', $now)
-            ->orderBy('mulai', 'asc')
+        $latestDowntime = Downtime::orderBy('id', 'desc')
             ->first();
         if ($latestDowntime) {
             $mulai = Carbon::parse($latestDowntime->mulai);
             $selesai = Carbon::parse($latestDowntime->selesai);
-            if ($mulai <= $now) {
-                if ($status) {
-                    $machineStatus->status = false;
-                    $machineStatus->stop_time = now();
-                    $machineStatus->save();
-                    $status = false;
-                }
-            } else if ($now >= $selesai) {
+            if ($now >= $selesai) {
                 if (!$status) {
                     $machineStatus = new MachineStatus();
                     $machineStatus->status = true;
                     $machineStatus->start_time = now();
                     $machineStatus->save();
                     $status = true;
+                }
+            } else if ($mulai <= $now) {
+                if ($status) {
+                    $machineStatus->status = false;
+                    $machineStatus->stop_time = now();
+                    $machineStatus->save();
+                    $status = false;
                 }
             }
         }
@@ -289,14 +288,24 @@ class OeeController extends Controller
         $oeeMetric->save();
 
         $dandori = Downtime::where('downtimedesc', '=', 'Dandori')
+            ->where('mulai', '>=', $start_prod)
+            ->where('selesai', '<=', $finish_prod)
             ->sum('duration');
         $others = Downtime::where('downtimedesc', '=', 'Others')
+            ->where('mulai', '>=', $start_prod)
+            ->where('selesai', '<=', $finish_prod)
             ->sum('duration');
         $tool = Downtime::where('downtimedesc', '=', 'Tool')
+            ->where('mulai', '>=', $start_prod)
+            ->where('selesai', '<=', $finish_prod)
             ->sum('duration');
-        $start_up = Downtime::where('downtimedesc', '=', 'Start_Up')
+        $start_up = Downtime::where('downtimedesc', '=', 'Startup')
+            ->where('mulai', '>=', $start_prod)
+            ->where('selesai', '<=', $finish_prod)
             ->sum('duration');
         $breakdown = Downtime::where('downtimedesc', '=', 'Breakdown')
+            ->where('mulai', '>=', $start_prod)
+            ->where('selesai', '<=', $finish_prod)
             ->sum('duration');
 
         return response()->json([
@@ -315,7 +324,8 @@ class OeeController extends Controller
             'breakdown' => $breakdown,
             'productions' => $productions,
             'start_prod' => $start_prod,
-            'status' => $status
+            'status' => $status,
+            'latestDowntime' => $latestDowntime
         ]);
     }
 

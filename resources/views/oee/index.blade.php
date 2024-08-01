@@ -200,7 +200,7 @@
                     </div>
                     <div class="col border ms-2 pt-2">
                         <h5 class="text-light mb-2">Trouble Information</h5>
-                        <span></span>
+                        <span class="text-light" id="trouble-info">-</span>
                     </div>
                 </div>
                 <div class="row">
@@ -588,7 +588,8 @@
             productions,
             cycleTime,
             start,
-            status
+            status,
+            trouble
         ) {
             var availabilityValue = Number(oeeMetrics.availability);
             availabilityChart.data.datasets[0].data[0] = oeeMetrics.availability;
@@ -702,67 +703,6 @@
             addBars('breakdown', breakdownCount);
             document.getElementById('breakdownTime').innerHTML = breakdown + ' min';
 
-            var dataProduksiIdeal = [];
-
-            function pad(num) {
-                return num < 10 ? '0' + num : num;
-            }
-
-            function getTimestamp(date) {
-                return date.getFullYear() + '-' +
-                    pad(date.getMonth() + 1) + '-' +
-                    pad(date.getDate()) + ' ' +
-                    pad(date.getHours()) + ':' +
-                    pad(date.getMinutes()) + ':' +
-                    pad(date.getSeconds());
-            }
-
-            let startTime = new Date(start);
-
-            let endTime = new Date();
-
-            let initialAmount = 0;
-
-            for (let time = startTime; time <= endTime; time.setMinutes(time.getMinutes() + cycleTime)) {
-                let timestamp_capture = getTimestamp(time);
-                let amount = initialAmount + 1;
-                dataProduksiIdeal.push({
-                    amount,
-                    timestamp_capture
-                });
-            }
-
-            var timestamps = Array.from(new Set([
-                ...productions.map(item => item.timestamp_capture),
-                ...dataProduksiIdeal.map(item => item.timestamp)
-            ])).sort((a, b) => new Date(a) - new Date(b));
-
-            function findDataAtTimestamp(data, timestamp) {
-                var found = data.find(item.timestamp_capture === timestamp);
-                return found ? found.amount || data.indexOf(found) : null;
-            }
-
-            var dataRiilAligned = timestamps.map(timestamp => findDataAtTimestamp(productions, timestamp));
-            var dataIdealAligned = timestamps.map(timestamp => findDataAtTimestamp(dataProduksiIdeal, timestamp));
-
-            var labels = timestamps.map(timestamp => new Date(timestamp).toLocaleTimeString());
-
-            console.log(Array.isArray(productions));
-            console.log(productions);
-
-            var dataRiil = productions.map(function(item, index) {
-                return index;
-            });
-
-            var dataIdeal = dataProduksiIdeal.map(function(item) {
-                return item.amount;
-            });
-
-            productionChart.data.labels = labels;
-            productionChart.data.datasets[0].data = dataRiilAligned;
-            productionChart.data.datasets[1].data = dataIdealAligned;
-            productionChart.update();
-
             let tableBody = $('#data-production');
             tableBody.empty();
             productions.forEach(function(item, index) {
@@ -778,15 +718,72 @@
                 tableBody.append(row);
             });
 
-            var toggleButton = document.getElementById('toggleMachineStatus');
-
             if (status) {
-                toggleButton.className = 'btn btn-sm btn-success mb-2';
-                toggleButton.innerHTML = 'ON';
+                $('#toggleMachineStatus').removeClass('btn-danger').addClass('btn-success').text('ON');
+                document.getElementById('trouble-info').innerText = "-";
             } else {
-                toggleButton.className = 'btn btn-sm btn-danger mb-2';
-                toggleButton.innerHTML = 'STOP';
+                $('#toggleMachineStatus').removeClass('btn-success').addClass('btn-danger').text('STOP');
+                document.getElementById('trouble-info').innerText = trouble;
             }
+
+            // Fungsi untuk menambahkan 0 di depan angka jika kurang dari 10
+            function pad(num) {
+                return num < 10 ? '0' + num : num;
+            }
+
+            // Fungsi untuk mendapatkan timestamp dalam format YYYY-MM-DD HH:MM:SS
+            function getTimestamp(date) {
+                return date.getFullYear() + '-' +
+                    pad(date.getMonth() + 1) + '-' +
+                    pad(date.getDate()) + ' ' +
+                    pad(date.getHours()) + ':' +
+                    pad(date.getMinutes()) + ':' +
+                    pad(date.getSeconds());
+            }
+
+            // Tentukan waktu mulai (misalnya, 1 jam yang lalu dari sekarang)
+            let startTime = new Date(start);
+
+            // Tentukan waktu sekarang
+            let endTime = new Date();
+
+            // Array untuk menyimpan data
+            let dataProduksiIdeal = [];
+
+            // Jumlah awal
+            let initialAmount = -1;
+
+            // Loop untuk menambah data setiap 3 menit
+            for (let time = startTime; time <= endTime; time.setMinutes(time.getMinutes() + cycleTime)) {
+                let timestamp_capture = getTimestamp(time);
+                let amount = initialAmount + 1; // Contoh jumlah acak
+                dataProduksiIdeal.push({
+                    amount,
+                    timestamp_capture
+                });
+                initialAmount = amount; // Update jumlah awal untuk iterasi berikutnya
+            }
+
+            var timestamps = Array.from(new Set([
+                ...productions.map(item => item.timestamp_capture),
+                ...dataProduksiIdeal.map(item => item.timestamp_capture)
+            ])).sort((a, b) => new Date(a) - new Date(b));
+
+            // Fungsi untuk mencari data pada timestamp tertentu atau mengembalikan null jika tidak ditemukan
+            function findDataAtTimestamp(data, timestamp) {
+                var found = data.find(item => item.timestamp_capture === timestamp);
+                return found ? found.amount || (data.indexOf(found) + 1) :
+                    null; // Menggunakan formula dummy untuk produksi riil
+            }
+
+            // Ekstrak data yang diselaraskan
+            var dataRiilAligned = timestamps.map(timestamp => findDataAtTimestamp(productions, timestamp));
+            var dataIdealAligned = timestamps.map(timestamp => findDataAtTimestamp(dataProduksiIdeal, timestamp));
+
+            productionChart.data.labels = timestamps;
+            productionChart.data.datasets[0].data = dataRiilAligned;
+            productionChart.data.datasets[1].data = dataIdealAligned;
+            productionChart.update();
         }
 
         var fetchOeeMetricsInterval = null;
@@ -813,7 +810,8 @@
                             response.productions,
                             response.cycleTime,
                             response.start_prod,
-                            response.status
+                            response.status,
+                            response.latestDowntime.downtimedesc
                         );
                     }
                 },
