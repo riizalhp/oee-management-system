@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/luxon@1.26.0/build/global/luxon.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body {
@@ -30,8 +31,8 @@
 
         .chart-container-oee-loss {
             position: relative;
-            height: 120px;
-            width: 120px;
+            height: 150px;
+            width: 150px;
             display: inline-block;
         }
 
@@ -241,7 +242,7 @@
         </div>
         <div class="row text-center">
             <div class="col border center-vertical">
-                <div class="col center-vertical">
+                <div class="col center-vertical m-auto">
                     <div class="container">
                         <h5 class="text-light">Stop Category</h5>
                         <div class="chart-container-stop">
@@ -404,56 +405,54 @@
                 </div>
             </div>
 
-            <div class="col border center-vertical text-center">
-                <div class="container pt-3 text-center" style="max-width: 300px">
-                    <h5 class="text-light text-center" style="text-align: center">OEE VS Loss</h5>
+            <div class="col border center-vertical">
+                <div class="container pt-3" style="max-width: 300px">
+                    <h5 class="text-light">OEE VS Loss</h5>
                     <div class="d-flex">
                         <div class="chart-container-oee-loss my-2">
                             <canvas id="oeeLossChart"></canvas>
                         </div>
-                        <div class="container">
-                            <table class="table table-dark table-sm ms-2" style="font-size: 12px">
-                                <thead>
-                                    <tr>
-                                        <th></th>
-                                        <th>current</th>
-                                        <th>percentage</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <div class="legend-color" style="background-color: red;"></div>Stop_Loss
-                                        </td>
-                                        <td id="stopTimeLoss">-</td>
-                                        <td id="stopLossPercent">100%</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="legend-color" style="background-color: yellow;"></div>
-                                            Speed_Loss
-                                        </td>
-                                        <td id="speedLoss">-</td>
-                                        <td id="speedLossPercent">0%</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="legend-color" style="background-color: orange;"></div>
-                                            Quality_Loss
-                                        </td>
-                                        <td id="defectTime">-</td>
-                                        <td id="qualityLossPercent">0%</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="legend-color" style="background-color: green;"></div>OEE
-                                        </td>
-                                        <td id="oeeCurrent">-</td>
-                                        <td id="oeePercent">0%</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                        <table class="table table-dark table-sm ms-2" style="font-size: 12px">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>current</th>
+                                    <th>percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="legend-color" style="background-color: red;"></div>Stop_Loss
+                                    </td>
+                                    <td id="stopTimeLoss">-</td>
+                                    <td id="stopLossPercent">100%</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="legend-color" style="background-color: yellow;"></div>
+                                        Speed_Loss
+                                    </td>
+                                    <td id="speedLoss">-</td>
+                                    <td id="speedLossPercent">0%</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="legend-color" style="background-color: orange;"></div>
+                                        Quality_Loss
+                                    </td>
+                                    <td id="defectTime">-</td>
+                                    <td id="qualityLossPercent">0%</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="legend-color" style="background-color: green;"></div>OEE
+                                    </td>
+                                    <td id="oeeCurrent">-</td>
+                                    <td id="oeePercent">0%</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -491,6 +490,24 @@
                     }
                 }
             },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'minute',
+                        tooltipFormat: 'HH:mm:ss',
+                        displayFormats: {
+                            minute: 'HH:mm:ss'
+                        }
+                    },
+                    ticks: {
+                        callback: function(value, index, values) {
+                            var date = new Date(value);
+                            return date.toLocaleTimeString('en-GB'); // Format waktu HH:mm:ss
+                        }
+                    }
+                }
+            }
         })
         var ctx = document.getElementById('oeeLossChart').getContext('2d');
         var oeeLossChart = new Chart(ctx, {
@@ -508,9 +525,18 @@
                 plugins: {
                     legend: {
                         display: false
+                    },
+                    datalabels: {
+                        formatter: (value, context) => {
+                            let sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                            let percentage = (value * 100 / sum).toFixed(2) + "%";
+                            return percentage;
+                        },
+                        color: '#fff',
                     }
                 }
-            }
+            },
+            plugins: [ChartDataLabels]
         });
 
         function createGaugeChart(ctx, value, label, textId) {
@@ -722,10 +748,10 @@
 
             if (status) {
                 $('#toggleMachineStatus').removeClass('btn-danger').addClass('btn-success').text('ON');
-                document.getElementById('trouble-info').innerText = "-";
+                document.getElementById('trouble-info').innerHTML = "-";
             } else {
                 $('#toggleMachineStatus').removeClass('btn-success').addClass('btn-danger').text('STOP');
-                document.getElementById('trouble-info').innerText = trouble;
+                document.getElementById('trouble-info').innerHTML = trouble;
             }
 
             // Fungsi untuk menambahkan 0 di depan angka jika kurang dari 10
