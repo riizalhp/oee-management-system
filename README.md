@@ -18,17 +18,17 @@ Follow these steps to set up and run the project:
    git clone this repository
    cd oee-management-system
 2. Install npm dependencies
-   npm install
+   " npm install "
 3. Run database migrations
-   php artisan migrate:fresh
+   " php artisan migrate:fresh "
 4. Open pgAdmin
    Set up your PostgreSQL database and make sure it's running. Update your .env file with the correct database connection details.
 5. Serve the Laravel application   
-   php artisan serve
+   " php artisan serve "
 6. Configure production and downtime data files
     Open the script.py and script-downtime.py files and set the dates and times according to the current date and the desired times.
 7. Run the process script
-    Open a terminal and navigate to the project directory, then run: python process.py
+    Open a terminal and navigate to the project directory, then run: " python process.py "
 8. Refresh your browser
 Open your browser and navigate to the Laravel server URL (usually http://127.0.0.1:8000). Refresh the page to see the updated data.
 
