@@ -1,14 +1,37 @@
 ## How to?
 
-If an error happened when try to run 'php artisan serve', try to :
+OEE Management System
+This project is an OEE (Overall Equipment Effectiveness) Management System built using Laravel, PostgreSQL, and Python. The system tracks production data and downtime to calculate OEE metrics.
 
-1. run 'composer install'
-2. then, try to run 'php artisan serve' again.
+Prerequisites
+Make sure you have the following installed on your machine:
 
-If 500 | server error happened, try to :
+- Node.js and npm
+- PHP and Composer
+- PostgreSQL and pgAdmin
+- Python
 
-1. Look to .env files. If it still .env.example, rename it to .env
-2. the, to try to run 'php artisan serve' again.
+Getting Started
+Follow these steps to set up and run the project:
 
-The web says that there is no application key?
-try to run 'php artisan key:generate' then try to run the server again.
+1. Clone the repository
+   git clone this repository
+   cd oee-management-system
+2. Install npm dependencies
+   npm install
+3. Run database migrations
+   php artisan migrate:fresh
+4. Open pgAdmin
+   Set up your PostgreSQL database and make sure it's running. Update your .env file with the correct database connection details.
+5. Serve the Laravel application   
+   php artisan serve
+6. Configure production and downtime data files
+    Open the script.py and script-downtime.py files and set the dates and times according to the current date and the desired times.
+7. Run the process script
+    Open a terminal and navigate to the project directory, then run: python process.py
+8. Refresh your browser
+Open your browser and navigate to the Laravel server URL (usually http://127.0.0.1:8000). Refresh the page to see the updated data.
+
+Additional Information
+Ensure that your Python scripts (data_produksi.py and downtime.py) are correctly formatted and contain the necessary data before running the process.py script.
+If you encounter any issues, check the Laravel logs (storage/logs/laravel.log) and PostgreSQL logs for more information.
